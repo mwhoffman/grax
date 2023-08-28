@@ -14,8 +14,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "coverage[toml]",
   "mypy",
-  "pytest"
+  "pytest",
 ]
 
 [build-system]
@@ -27,6 +28,11 @@ version = {attr = "grax.__version__"}
 
 [tool.pytest.ini_options]
 addopts = [
-    "--import-mode=importlib",
+  "--cov=grax",
+  "--import-mode=importlib",
 ]
 
+[tool.coverage.run]
+omit = [
+  "test_*.py",
+]

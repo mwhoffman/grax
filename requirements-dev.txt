@@ -8,6 +8,8 @@ absl-py==1.4.0
     # via chex
 chex==0.1.82
     # via grax (pyproject.toml)
+coverage[toml]==7.3.0
+    # via grax (pyproject.toml)
 iniconfig==2.0.0
     # via pytest
 jax==0.4.14
