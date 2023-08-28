@@ -1,12 +1,12 @@
 """Implementation of a simple, squared-exponential kernel.
 """
 
-from grax.typing import Array, ArrayLike, DType
+from grax.typing import Array, ArrayLike, DTypeLike
 from typing import Optional
 
 import chex
+import jax
 import jax.numpy as jnp
-import numpy as np
 
 
 class SquaredExponential:
@@ -18,7 +18,7 @@ class SquaredExponential:
       rho: ArrayLike,
       ell: ArrayLike,
       dim: Optional[int] = None,
-      dtype: DType = jnp.float32,
+      dtype: DTypeLike = jnp.float32,
   ):
     rho = jnp.asarray(rho, dtype=dtype)
     ell = jnp.asarray(ell, dtype=dtype)
@@ -41,16 +41,20 @@ class SquaredExponential:
     self._dim = dim
 
   def __repr__(self) -> str:
-    repr_str = self.__class__.__name__
-    repr_str += '('
-    repr_str += f'rho={self.rho.tolist()}, '
-    repr_str += f'ell={self.ell.tolist()}'
+    kwargs = dict()
+    kwargs['rho'] = str(self.rho.tolist())
+    kwargs['ell'] = str(self.ell.tolist())
+
     if self._dim is not None:
-      repr_str += f', dim={self._dim}'
+      kwargs['dim'] = str(self._dim)
+
     if self.dtype is not jnp.float32:
-      repr_str += f', dtype={self.dtype.dtype.name}'
-    repr_str += ')'
-    return repr_str
+      kwargs['dtype'] = jax.dtypes.canonicalize_dtype(self.dtype).name
+
+    kwargs_str = ', '.join(f'{k}={v}' for k, v in kwargs.items())
+    type_str = f'{self.__class__.__name__}({kwargs_str})'
+
+    return type_str
 
   def __call__(
       self,

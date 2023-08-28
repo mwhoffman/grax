@@ -2,13 +2,12 @@
 """
 
 import jax
-import jax.numpy as jnp
 
 
 Array = jax.Array
 ArrayLike = jax.typing.ArrayLike
-DType = type(jnp.float32)
+DType = jax._src.typing.DType
+DTypeLike = jax._src.typing.DTypeLike
 
 del jax
-del jnp
 
