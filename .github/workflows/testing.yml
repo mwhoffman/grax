@@ -19,7 +19,9 @@ jobs:
           cache: 'pip'
 
       - name: Install requirements
-        run: pip install -r requirements-dev.txt
+        run: |
+          pip install -r requirements-dev.txt
+          pip install .
 
       - name: Check types
         run: mypy ./grax
