@@ -17,6 +17,7 @@ dev = [
   "coverage[toml]",
   "mypy",
   "pytest",
+  "pytest-cov",
 ]
 
 [build-system]
