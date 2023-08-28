@@ -1,0 +1,27 @@
+[project]
+name = "grax"
+description = "A simple GP package using python and JAX"
+license = {file = "LICENSE"}
+readme = "README.md"
+authors = [{name = "Matthew W. Hoffman"}]
+dynamic = ["version"]
+
+requires-python = ">=3.8"
+dependencies = [
+  "chex",
+  "jax",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy",
+  "pytest"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "grax.__version__"}
+
