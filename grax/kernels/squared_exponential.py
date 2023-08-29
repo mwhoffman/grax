@@ -91,6 +91,6 @@ class SquaredExponential:
     return K
 
   @property
-  def dim(self):
+  def dim(self) -> int:
     return self.ell.shape[0] if self._dim is None else self._dim
 
