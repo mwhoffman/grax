@@ -22,12 +22,12 @@ def test_init():
 
 def test_repr():
   result = repr(SquaredExponential(1, 1, dim=1, dtype='float16'))
-  desired = 'SquaredExponential(rho=1.0, ell=1.0, dim=1, dtype=float16)'
-  assert result == desired
+  expected = 'SquaredExponential(rho=1.0, ell=1.0, dim=1, dtype=float16)'
+  assert result == expected
 
   result = repr(SquaredExponential(1, [1, 1]))
-  desired = 'SquaredExponential(rho=1.0, ell=[1.0, 1.0])'
-  assert result == desired
+  expected = 'SquaredExponential(rho=1.0, ell=[1.0, 1.0])'
+  assert result == expected
 
 
 def test_dim():
@@ -60,6 +60,6 @@ def test_goldens():
   with open(path.splitext(__file__)[0] + '.golden', 'rb') as f:
     goldens = pickle.load(f)
 
-  for class_kwargs, call_kwargs, desired in goldens:
+  for class_kwargs, call_kwargs, expected in goldens:
     result = SquaredExponential(**class_kwargs)(**call_kwargs)
-    assert np.allclose(result, desired)
+    assert np.allclose(result, expected)
