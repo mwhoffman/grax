@@ -56,6 +56,10 @@ class SquaredExponential:
 
     return type_str
 
+  @property
+  def dim(self) -> int:
+    return self.ell.shape[0] if self._dim is None else self._dim
+
   def __call__(
       self,
       X1: ArrayLike,
@@ -89,8 +93,4 @@ class SquaredExponential:
     D = jnp.clip(Z1 - 2*jnp.matmul(X1, X2.T) + Z2.T, 0)
     K = self.rho * jnp.exp(-D/2)
     return K
-
-  @property
-  def dim(self) -> int:
-    return self.ell.shape[0] if self._dim is None else self._dim
 
