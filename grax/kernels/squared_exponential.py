@@ -62,35 +62,35 @@ class SquaredExponential:
 
   def __call__(
       self,
-      X1: ArrayLike,
-      X2: Optional[ArrayLike] = None,
+      x1: ArrayLike,
+      x2: Optional[ArrayLike] = None,
       diag: bool = False,
   ) -> Array:
-    X1 = jnp.asarray(X1, dtype=self.dtype)
-    chex.assert_rank(X1, 2)
-    chex.assert_axis_dimension(X1, 1, self.dim)
+    x1 = jnp.asarray(x1, dtype=self.dtype)
+    chex.assert_rank(x1, 2)
+    chex.assert_axis_dimension(x1, 1, self.dim)
 
     if diag:
-      if X2 is None:
-        return jnp.full(X1.shape[0], self.rho)
+      if x2 is None:
+        return jnp.full(x1.shape[0], self.rho)
       else:
         raise ValueError('the diagonal kernel is invalid for two input arrays.')
 
-    X1 = X1 / self.ell
-    Z1 = jnp.sum(X1**2, axis=1, keepdims=True)
+    x1 = x1 / self.ell
+    z1 = jnp.sum(x1**2, axis=1, keepdims=True)
 
-    if X2 is not None:
-      X2 = jnp.asarray(X2, dtype=self.dtype)
-      chex.assert_rank(X2, 2)
-      chex.assert_axis_dimension(X2, 1, self.dim)
-      X2 = X2 / self.ell
-      Z2 = jnp.sum(X2**2, axis=1, keepdims=True)
+    if x2 is not None:
+      x2 = jnp.asarray(x2, dtype=self.dtype)
+      chex.assert_rank(x2, 2)
+      chex.assert_axis_dimension(x2, 1, self.dim)
+      x2 = x2 / self.ell
+      z2 = jnp.sum(x2**2, axis=1, keepdims=True)
 
     else:
-      X2 = X1
-      Z2 = Z1
+      x2 = x1
+      z2 = z1
 
-    D = jnp.clip(Z1 - 2*jnp.matmul(X1, X2.T) + Z2.T, 0)
+    D = jnp.clip(z1 - 2*jnp.matmul(x1, x2.T) + z2.T, 0)
     K = self.rho * jnp.exp(-D/2)
     return K
 
