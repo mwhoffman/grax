@@ -27,10 +27,9 @@ jobs:
         run: mypy ./grax
 
       - name: Run tests
-        run: |
-          pytest
+        run: pytest
 
       - name: Upload data to Coveralls
         run: |
-          pip install python-coveralls
+          pip install coveralls
           coveralls
