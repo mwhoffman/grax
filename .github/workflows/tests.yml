@@ -27,9 +27,11 @@ jobs:
         run: mypy ./grax
 
       - name: Run tests
-        run: pytest
+        run: |
+          pytest
+          coverage xml
 
       - name: Upload data to Coveralls
         uses: coverallsapp/github-action@v2
         with:
-          file: .coverage
+          file: coverage.xml
