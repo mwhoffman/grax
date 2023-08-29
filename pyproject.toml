@@ -31,6 +31,9 @@ version = {attr = "grax.__version__"}
 addopts = [
   "--cov=grax",
   "--import-mode=importlib",
+  "--no-header",
+  "--tb=short",
+  "--verbose",
 ]
 
 [tool.coverage.run]

@@ -1,7 +1,8 @@
 /.mypy_cache/
 /.pytest_cache/
 /.venv/
-**/.coverage
+/htmlcov/
+/.coverage
 **/__pycache__/
-*.egg-info
-*.swp
+**/*.egg-info
+**/*.swp
