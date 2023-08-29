@@ -1,6 +1,7 @@
 # grax
 
 ![tests](https://github.com/mwhoffman/grax/actions/workflows/tests.yml/badge.svg)
+![coverage](https://github.com/mwhoffman/grax/blob/gh-pages/coverage.svg?raw=true)
 
 A simple GP package using python and JAX.
 
