@@ -21,8 +21,8 @@ jobs:
       - name: Install requirements
         run: |
           pip install -r requirements-dev.txt
-          pip install .
           pip install coveralls
+          pip install -e .
 
       - name: Check types
         run: mypy ./grax
@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: pytest
 
-      - name: Upload data to coveralls
+      - name: Upload coverage data to coveralls
         run: coveralls --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
