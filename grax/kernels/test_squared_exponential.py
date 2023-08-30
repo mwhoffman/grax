@@ -55,6 +55,6 @@ def test_call():
       kernel(x1, x2, diag=True)
 
 
-@testing.parameterize_goldens(__file__)
+@testing.parameterize_goldens('test_squared_exponential.pkl')
 def test_goldens(class_kwargs, call_kwargs):
   return SquaredExponential(**class_kwargs)(**call_kwargs)
