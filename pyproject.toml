@@ -32,7 +32,7 @@ addopts = [
   "--cov=grax",
   "--import-mode=importlib",
   "--no-header",
-  "--tb=short",
+  "--tb=line",
   "--verbose",
 ]
 

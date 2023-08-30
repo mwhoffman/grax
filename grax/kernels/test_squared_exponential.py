@@ -2,11 +2,10 @@
 """
 
 import numpy as np
-import pickle
 import pytest
 
+from grax import testing
 from grax.kernels.squared_exponential import SquaredExponential
-from os import path
 
 
 def test_init():
@@ -56,10 +55,6 @@ def test_call():
       kernel(x1, x2, diag=True)
 
 
-def test_goldens():
-  with open(path.splitext(__file__)[0] + '.golden', 'rb') as f:
-    goldens = pickle.load(f)
-
-  for class_kwargs, call_kwargs, expected in goldens:
-    result = SquaredExponential(**class_kwargs)(**call_kwargs)
-    assert np.allclose(result, expected)
+@testing.parameterize_goldens(__file__)
+def test_goldens(class_kwargs, call_kwargs):
+  return SquaredExponential(**class_kwargs)(**call_kwargs)
