@@ -3,12 +3,13 @@
 
 import numpy as np
 import pytest
+import testing
 
-from grax import testing
 from grax.kernels.squared_exponential import SquaredExponential
+from grax.typing import Array
 
 
-def test_init():
+def test_init() -> None:
   with pytest.raises(ValueError):
     SquaredExponential(1, 1)
 
@@ -19,7 +20,7 @@ def test_init():
     SquaredExponential(1, [1, 1], dim=1)
 
 
-def test_repr():
+def test_repr() -> None:
   result = repr(SquaredExponential(1, 1, dim=1, dtype="float16"))
   expected = "SquaredExponential(rho=1.0, ell=1.0, dim=1, dtype=float16)"
   assert result == expected
@@ -29,12 +30,12 @@ def test_repr():
   assert result == expected
 
 
-def test_dim():
+def test_dim() -> None:
   assert SquaredExponential(1, 1, dim=1).dim == 1
   assert SquaredExponential(1, [1, 1]).dim == 2
 
 
-def test_call():
+def test_call() -> None:
   n, m = 8, 5
   kernels = [
     SquaredExponential(1, 1, dim=1),
@@ -56,5 +57,5 @@ def test_call():
 
 
 @testing.parameterize_goldens("test_squared_exponential.pkl")
-def test_goldens(class_kwargs, call_kwargs):
+def test_goldens(class_kwargs, call_kwargs) -> Array:
   return SquaredExponential(**class_kwargs)(**call_kwargs)

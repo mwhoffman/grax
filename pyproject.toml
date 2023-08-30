@@ -28,16 +28,13 @@ build-backend = "setuptools.build_meta"
 version = {attr = "grax.__version__"}
 
 [tool.pytest.ini_options]
+testpaths = "tests"
+pythonpath = "tests"
 addopts = [
   "--cov=grax",
   "--import-mode=importlib",
-  "--no-header",
-  "--tb=line",
   "--verbose",
 ]
 
 [tool.coverage.run]
 branch = true
-omit = [
-  "*/test_*.py",
-]
