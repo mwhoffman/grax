@@ -2,4 +2,3 @@
 """
 
 from grax.kernels.squared_exponential import SquaredExponential
-

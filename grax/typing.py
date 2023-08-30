@@ -10,4 +10,3 @@ DType = jax._src.typing.DType
 DTypeLike = jax._src.typing.DTypeLike
 
 del jax
-
