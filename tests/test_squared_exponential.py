@@ -21,6 +21,10 @@ def test_init() -> None:
 
 
 def test_repr() -> None:
+  result = repr(SquaredExponential(1., 1., dim=1))
+  expected = "SquaredExponential(rho=1.0, ell=1.0, dim=1)"
+  assert result == expected
+
   result = repr(SquaredExponential(1., np.array([1., 1.])))
   expected = "SquaredExponential(rho=1.0, ell=[1.0, 1.0])"
   assert result == expected
