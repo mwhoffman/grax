@@ -8,12 +8,12 @@ import pickle
 import pytest
 
 
-def parameterize_goldens(filename: str, *inputs: tuple):
+def parameterize_goldens(filename: str, *inputs: dict):
   """Parameterize a collection of golden tests.
 
   Given a `filename` storing golden outputs and a collection of testing `inputs`
   this provides a wrapper of the form `paremeterize(func)` which will run
-  `func(*inputs[i])` and compare its output against `outputs[i]` as read from
+  `func(**inputs[i])` and compare its output against `outputs[i]` as read from
   the given (pickled) file using `numpy.testing.assert_allclose`.
   """
   # Get the directory of the caller's file which we'll use to look for
@@ -37,7 +37,7 @@ def parameterize_goldens(filename: str, *inputs: tuple):
       # This intermediate wrapper just calls the test function with the golden
       # inputs and then compares the output against the expected version,
       # raising an error unless the result is "close" as defined by numpy.
-      nt.assert_allclose(func(*input), golden)
+      nt.assert_allclose(func(**input), golden)
 
     # This is the wrapped function, i.e. the result of applying the decorator.
     return wrapper
