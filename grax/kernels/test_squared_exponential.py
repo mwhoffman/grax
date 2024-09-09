@@ -3,8 +3,8 @@
 
 import numpy as np
 import pytest
-import testing
 
+from grax import testing
 from grax.kernels.squared_exponential import SquaredExponential
 from grax.typing import Array
 
@@ -59,3 +59,4 @@ def test_call() -> None:
 @testing.parameterize_goldens("test_squared_exponential.pkl")
 def test_goldens(class_kwargs, call_kwargs) -> Array:
   return SquaredExponential(**class_kwargs)(**call_kwargs)
+

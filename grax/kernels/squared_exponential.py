@@ -1,8 +1,8 @@
 """Implementation of a simple, squared-exponential kernel.
 """
 
-from grax import typing
 from grax import checks
+from grax import typing
 
 import jax.numpy as jnp
 
@@ -60,7 +60,7 @@ class SquaredExponential:
     diag: bool = False,
   ) -> typing.Array:
     x1 = jnp.asarray(x1)
-    checks.check_type_and_dimensions(x1, typing.Float, (None, self.dim))
+    checks.check_type_and_shape(x1, typing.Float, (None, self.dim))
 
     if diag:
       if x2 is None:
@@ -73,7 +73,7 @@ class SquaredExponential:
 
     if x2 is not None:
       x2 = jnp.asarray(x2)
-      checks.check_type_and_dimensions(x1, typing.Float, (None, self.dim))
+      checks.check_type_and_shape(x1, typing.Float, (None, self.dim))
       x2 = x2 / self.ell
       z2 = jnp.sum(x2**2, axis=1, keepdims=True)
 
