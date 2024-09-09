@@ -1,11 +1,9 @@
 """Implementation of a simple, squared-exponential kernel.
 """
 
-from grax.typing import Array, ArrayLike, DTypeLike
-from typing import Optional
+from grax import typing
+from grax import checks
 
-import chex
-import jax
 import jax.numpy as jnp
 
 
@@ -14,29 +12,28 @@ class SquaredExponential:
 
   def __init__(
     self,
-    rho: ArrayLike,
-    ell: ArrayLike,
-    dim: Optional[int] = None,
-    dtype: DTypeLike = jnp.float32,
+    rho: typing.ArrayLike,
+    ell: typing.ArrayLike,
+    dim: int | None = None,
   ):
-    rho = jnp.asarray(rho, dtype=dtype)
-    ell = jnp.asarray(ell, dtype=dtype)
+    rho = jnp.asarray(rho)
+    ell = jnp.asarray(ell)
 
-    chex.assert_rank(rho, 0)
-    chex.assert_rank(ell, {0, 1})
+    checks.check_type_and_rank(rho, typing.Float, 0)
+    checks.check_type_and_rank(ell, typing.Float, {0, 1})
 
-    if dim is None and ell.ndim == 0:
+    if dim is not None:
+      if ell.ndim == 1:
+        raise ValueError("dim cannot be specified if ell is non-scalar.")
+
+      elif dim <= 0:
+        raise ValueError("dim must be greater than zero.")
+
+    elif ell.ndim == 0:
       raise ValueError("dim must be specified if ell is a scalar.")
-
-    if dim is not None and ell.ndim == 1:
-      raise ValueError("dim cannot be specified if ell is non-scalar.")
-
-    if dim is not None and dim <= 0:
-      raise ValueError("dim must be greater than zero.")
 
     self.rho = rho
     self.ell = ell
-    self.dtype = dtype
     self._dim = dim
 
   def __repr__(self) -> str:
@@ -46,9 +43,6 @@ class SquaredExponential:
 
     if self._dim is not None:
       kwargs["dim"] = str(self._dim)
-
-    if self.dtype is not jnp.float32:
-      kwargs["dtype"] = jax.dtypes.canonicalize_dtype(self.dtype).name
 
     kwargs_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
     type_str = f"{self.__class__.__name__}({kwargs_str})"
@@ -61,13 +55,12 @@ class SquaredExponential:
 
   def __call__(
     self,
-    x1: ArrayLike,
-    x2: Optional[ArrayLike] = None,
+    x1: typing.ArrayLike,
+    x2: typing.ArrayLike | None = None,
     diag: bool = False,
-  ) -> Array:
-    x1 = jnp.asarray(x1, dtype=self.dtype)
-    chex.assert_rank(x1, 2)
-    chex.assert_axis_dimension(x1, 1, self.dim)
+  ) -> typing.Array:
+    x1 = jnp.asarray(x1)
+    checks.check_type_and_dimensions(x1, typing.Float, (None, self.dim))
 
     if diag:
       if x2 is None:
@@ -79,9 +72,8 @@ class SquaredExponential:
     z1 = jnp.sum(x1**2, axis=1, keepdims=True)
 
     if x2 is not None:
-      x2 = jnp.asarray(x2, dtype=self.dtype)
-      chex.assert_rank(x2, 2)
-      chex.assert_axis_dimension(x2, 1, self.dim)
+      x2 = jnp.asarray(x2)
+      checks.check_type_and_dimensions(x1, typing.Float, (None, self.dim))
       x2 = x2 / self.ell
       z2 = jnp.sum(x2**2, axis=1, keepdims=True)
 
@@ -92,3 +84,4 @@ class SquaredExponential:
     D = jnp.clip(z1 - 2 * jnp.matmul(x1, x2.T) + z2.T, 0)
     K = self.rho * jnp.exp(-D / 2)
     return K
+

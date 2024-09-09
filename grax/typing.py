@@ -2,13 +2,11 @@
 """
 
 import jax
-from typing import Union
-
+import jax.typing
 
 Array = jax.Array
-ArrayLike = Union[jax.typing.ArrayLike, list[bool], list[int], list[float]]
-DType = jax._src.typing.DType
-DTypeLike = jax._src.typing.DTypeLike
+ArrayLike = jax.typing.ArrayLike
+DTypeLike = jax.typing.DTypeLike
 
-del jax
-del Union
+Float = ('bfloat16', 'float16', 'float32', 'float64')
+
