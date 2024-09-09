@@ -63,8 +63,17 @@ def test_call() -> None:
         dim=1,
         x1=np.linspace(0, 1, 10)[:, None],
         x2=np.linspace(0, 1, 20)[:, None],
+        diag=False,
+    ),
+    dict(
+        rho=1.0,
+        ell=1.0,
+        dim=1,
+        x1=np.linspace(0, 1, 10)[:, None],
+        x2=None,
+        diag=True,
     ),
 )
-def test_goldens(rho, ell, dim, x1, x2) -> Array:
-  return SquaredExponential(rho, ell, dim)(x1, x2)
+def test_goldens(rho, ell, dim, x1, x2, diag) -> Array:
+  return SquaredExponential(rho, ell, dim)(x1, x2, diag)
 
