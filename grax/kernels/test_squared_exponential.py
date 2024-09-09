@@ -56,7 +56,12 @@ def test_call() -> None:
       kernel(x1, x2, diag=True)
 
 
-@testing.parameterize_goldens("test_squared_exponential.pkl")
+@testing.parameterize_goldens(
+  'test_squared_exponential.pkl',
+  (dict(rho=1., ell=1., dim=1),
+   dict(x1=np.linspace(0, 1, 10)[:, None],
+        x2=np.linspace(0, 1, 20)[:, None])),
+)
 def test_goldens(class_kwargs, call_kwargs) -> Array:
   return SquaredExponential(**class_kwargs)(**call_kwargs)
 
