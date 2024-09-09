@@ -57,7 +57,6 @@ def test_call() -> None:
 
 
 @testing.parameterize_goldens(
-    "test_squared_exponential.pkl",
     dict(
         rho=1.0,
         ell=1.0,

@@ -8,32 +8,31 @@ import pickle
 import pytest
 
 
-def parameterize_goldens(filename: str, *inputs: dict):
+def parameterize_goldens(*inputs: dict):
   """Parameterize a collection of golden tests.
 
-  Given a `filename` storing golden outputs and a collection of testing `inputs`
-  this provides a wrapper of the form `paremeterize(func)` which will run
-  `func(**inputs[i])` and compare its output against `outputs[i]` as read from
-  the given (pickled) file using `numpy.testing.assert_allclose`.
+  Given a collection of testing `inputs` this provides a wrapper of the form 
+  `paremeterize(func)` which will run `func(**inputs[i])` and compare its output
+  previously run and saved golden outputs. Testing is performed using 
+  `numpy.testing.assert_allclose`.
   """
-  # Get the directory of the caller's file which we'll use to look for
-  # `filename` specifying the golden outputs.
-  dirname = os.path.dirname(inspect.stack()[1].filename)
-
-  # Get the golden outputs.
-  with open(os.path.join(dirname, filename), "rb") as f:
-    goldens = pickle.load(f)
-
-  if len(inputs) != len(goldens):
-    raise ValueError(f'The number of inputs ({len(inputs)}) doesn\'t match ' +
-                     f'the number of golden outputs ({len(goldens)})')
+  # Get the dirname and basename of the caller's file and remove the extension.
+  dirname, basename = os.path.split(inspect.stack()[1].filename)
+  basename = os.path.splitext(basename)[0]
 
   # Create the decorator.
   def parameterize(func):
-    # This parameterizes the decorated function with the goldens, i.e. it
-    # creates a single test instance for each element of the goldens list.
-    @pytest.mark.parametrize("input,golden", zip(inputs, goldens))
-    def wrapper(input, golden):
+    # This parameterizes the decorated function with the given inputs and wraps
+    # it so that each parameterized call will look up the golden outputs and
+    # compare against the output of the function.
+    @pytest.mark.parametrize("n, input", enumerate(inputs))
+    def wrapper(n, input):
+      # Open the golden file alongside the file of the caller.
+      with open(os.path.join(dirname, 'goldens', basename,
+                             func.__name__ + f'_{n}.pkl'), 'rb') as f:
+        # Get the golden outputs.
+        golden = pickle.load(f)
+
       # This intermediate wrapper just calls the test function with the golden
       # inputs and then compares the output against the expected version,
       # raising an error unless the result is "close" as defined by numpy.
