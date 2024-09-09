@@ -4,14 +4,8 @@
 from typing import Sequence, Set
 from grax.typing import ArrayLike, DTypeLike
 
-import chex
 import jax.dtypes
 import jax.numpy as jnp
-
-
-__all__ = [
-  'check_rank', 'assert_type'
-]
 
 
 def check_type(
