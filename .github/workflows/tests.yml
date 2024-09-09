@@ -25,10 +25,10 @@ jobs:
           pip install -e .
 
       - name: Check types
-        run: mypy ./grax
+        run: mypy ./grax ./tests
 
       - name: Run tests
-        run: pytest .
+        run: pytest ./tests
 
       - name: Upload coverage data to coveralls
         run: coveralls --service=github

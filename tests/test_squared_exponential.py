@@ -3,8 +3,8 @@
 
 import numpy as np
 import pytest
+import testing
 
-from grax import testing
 from grax.kernels.squared_exponential import SquaredExponential
 from grax.typing import Array
 
