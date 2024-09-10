@@ -2,9 +2,9 @@
 """
 
 import inspect
+import numpy as np
 import numpy.testing as nt
 import os.path
-import pickle
 import pytest
 
 
@@ -36,21 +36,20 @@ def parameterize_goldens(*inputs: dict):
 
       # Use the function name and the number of parameterized inputs to find the
       # file storing the golden output.
-      goldenfile = os.path.join(goldendir, func.__name__ + f'_{n}.pkl')
+      goldenfile = os.path.join(goldendir, func.__name__ + f'_{n}.npy')
 
       try:
         # Try to load the golden output.
         with open(goldenfile, 'rb') as f:
-          golden = pickle.load(f)
+          golden = np.load(f)
 
       except FileNotFoundError:
         if save_goldens:
           # If --save-goldens is given and no golden file exists save the
           # goldens and mark the test as skipped.
+          os.makedirs(os.path.dirname(goldenfile), exist_ok=True)
           with open(goldenfile, 'wb') as f:
-            pickle.dump(output, f)
-
-          # Raise a warning, but skip the test because it will clearly pass.
+            np.save(f, output)
           pytest.skip('Saving over empty golden file')
 
         else:
@@ -65,8 +64,9 @@ def parameterize_goldens(*inputs: dict):
         if update_goldens:
           # If --update-goldens is given save the goldens and mark the test as
           # skipped.
+          os.makedirs(os.path.dirname(goldenfile), exist_ok=True)
           with open(goldenfile, 'wb') as f:
-            pickle.dump(output, f)
+            np.save(f, output)
           pytest.skip('Saving over a failing golden file')
 
         else:
