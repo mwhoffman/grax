@@ -8,7 +8,7 @@ from grax.kernels.squared_exponential import SquaredExponential
 from grax.typing import Array
 
 
-def test_init() -> None:
+def test_init():
   with pytest.raises(ValueError):
     SquaredExponential(1.0, 1.0)
 
@@ -19,7 +19,7 @@ def test_init() -> None:
     SquaredExponential(1.0, np.array([1.0, 1.0]), dim=1)
 
 
-def test_repr() -> None:
+def test_repr():
   result = repr(SquaredExponential(1.0, 1.0, dim=1))
   expected = "SquaredExponential(rho=1.0, ell=1.0, dim=1)"
   assert result == expected
@@ -29,12 +29,12 @@ def test_repr() -> None:
   assert result == expected
 
 
-def test_dim() -> None:
+def test_dim():
   assert SquaredExponential(1.0, 1.0, dim=1).dim == 1
   assert SquaredExponential(1.0, np.array([1.0, 1.0])).dim == 2
 
 
-def test_call() -> None:
+def test_call():
   n, m = 8, 5
   kernels = [
     SquaredExponential(1.0, 1.0, dim=1),

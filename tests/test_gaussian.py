@@ -8,7 +8,7 @@ from grax.likelihoods.gaussian import Gaussian
 from grax.typing import Array
 
 
-def test_init() -> None:
+def test_init():
   Gaussian(1.0)
 
   with pytest.raises(ValueError):
@@ -21,13 +21,13 @@ def test_init() -> None:
     Gaussian(np.array([1.0, 1.0]))
 
 
-def test_repr() -> None:
+def test_repr():
   result = repr(Gaussian(1.0))
   expected = "Gaussian(sn2=1.0)"
   assert result == expected
 
 
-def test_call() -> None:
+def test_call():
   likelihood = Gaussian(1.0)
   likelihood(np.ones(10), np.zeros(10))
 

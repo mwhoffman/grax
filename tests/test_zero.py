@@ -7,20 +7,20 @@ import pytest
 from grax.means.zero import Zero
 
 
-def test_init() -> None:
+def test_init():
   Zero(1)
 
   with pytest.raises(ValueError):
     Zero(-1)
 
 
-def test_repr() -> None:
+def test_repr():
   result = repr(Zero(1))
   expected = "Zero(dim=1)"
   assert result == expected
 
 
-def test_call() -> None:
+def test_call():
   mean = Zero(3)
 
   zeros0 = mean(np.zeros((10, 3)))
