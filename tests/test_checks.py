@@ -33,10 +33,29 @@ def test_check_shape() -> None:
     checks.check_shape(np.zeros((2, 2, 2)), (1, 1, 1))
 
 
+def test_check_equal_shape() -> None:
+  checks.check_equal_shape()
+  checks.check_equal_shape(np.zeros((4, 3, 2)), np.ones((4, 3, 2)))
+
+  with pytest.raises(ValueError):
+    checks.check_equal_shape(np.zeros((4, 3, 2)), np.ones((4, 3)))
+
+
 def test_check_type_and_rank() -> None:
   checks.check_type_and_rank(np.zeros((2, 2)), float, 2)
 
 
 def test_check_type_and_shape() -> None:
   checks.check_type_and_shape(np.zeros((2, 2)), float, (2, 2))
+
+
+def test_check_positive() -> None:
+  checks.check_positive(1)
+  checks.check_positive(np.ones((2, 2)))
+
+  with pytest.raises(ValueError):
+    checks.check_positive(-1)
+
+  with pytest.raises(ValueError):
+    checks.check_positive(-1 * np.ones((2, 2)))
 

@@ -85,6 +85,20 @@ def check_shape(
       )
 
 
+def check_equal_shape(*arrays: ArrayLike) -> None:
+  """Check the shapes of all arrays match.
+  """
+  if len(arrays) == 0:
+    return
+
+  # Get the shape of the first array.
+  shape = jnp.shape(arrays[0])
+
+  # Check the shape of all arrays against the first.
+  for array in arrays[1:]:
+    check_shape(array, shape)
+
+
 def check_type_and_rank(
     array: ArrayLike,
     expected_dtypes: DTypeLike | Sequence[DTypeLike],
@@ -113,6 +127,14 @@ def check_type_and_shape(
   """
   check_type(array, expected_dtypes)
   check_shape(array, expected_shape)
+
+
+def check_positive(
+    array: ArrayLike,
+) -> None:
+  """Check that the given array is positive."""
+  if not jnp.all(jnp.greater(array, 0)):
+    raise ValueError('Array is not positive')
 
 
 def _join(seq: Iterable[Any]) -> str:

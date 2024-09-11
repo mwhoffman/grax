@@ -1,13 +1,14 @@
 """Implementation of a simple, squared-exponential kernel.
 """
 
-from grax import checks
-from grax import typing
-
 import jax.numpy as jnp
 
+from grax import checks
+from grax import typing
+from grax.kernels import base
 
-class SquaredExponential:
+
+class SquaredExponential(base.Kernel):
   """The squared-exponential kernel."""
 
   def __init__(
