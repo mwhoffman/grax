@@ -1,5 +1,4 @@
-"""Implementation of the standard Gaussian likelihood.
-"""
+"""Implementation of the standard Gaussian likelihood."""
 
 import jax.numpy as jnp
 
@@ -10,8 +9,7 @@ from grax.utils import repr
 
 
 class Gaussian(base.Likelihood):
-  """The Gaussian likelihood, i.e. for standard GP regression.
-  """
+  """The Gaussian likelihood, i.e. for standard GP regression."""
 
   def __init__(self, sn2: typing.ArrayLike):
     sn2 = jnp.asarray(sn2)
@@ -35,5 +33,4 @@ class Gaussian(base.Likelihood):
     checks.check_type_and_rank(f, typing.Float, 1)
     checks.check_equal_shape(y, f)
 
-    return -0.5 * ((y-f)**2 / self.sn2 + jnp.log(2 * jnp.pi * self.sn2))
-
+    return -0.5 * ((y - f) ** 2 / self.sn2 + jnp.log(2 * jnp.pi * self.sn2))

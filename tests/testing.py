@@ -1,5 +1,4 @@
-"""Test helpers.
-"""
+"""Test helpers."""
 
 import inspect
 import numpy as np
@@ -11,9 +10,9 @@ import pytest
 def parameterize_goldens(*inputs: dict):
   """Parameterize a collection of golden tests.
 
-  Given a collection of testing `inputs` this provides a wrapper of the form 
+  Given a collection of testing `inputs` this provides a wrapper of the form
   `paremeterize(func)` which will run `func(**inputs[i])` and compare its output
-  previously run and saved golden outputs. Testing is performed using 
+  previously run and saved golden outputs. Testing is performed using
   `numpy.testing.assert_allclose`.
   """
   # Find the directory storing goldens for the current module.
@@ -80,4 +79,3 @@ def parameterize_goldens(*inputs: dict):
 
   # Return the decorator which will be applied to the test function.
   return parameterize
-

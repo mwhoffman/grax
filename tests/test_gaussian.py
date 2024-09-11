@@ -1,5 +1,4 @@
-"""Tests for the Gaussian likelihood.
-"""
+"""Tests for the Gaussian likelihood."""
 
 import numpy as np
 import pytest
@@ -10,26 +9,26 @@ from grax.typing import Array
 
 
 def test_init() -> None:
-  Gaussian(1.)
+  Gaussian(1.0)
 
   with pytest.raises(ValueError):
     Gaussian(1)
 
   with pytest.raises(ValueError):
-    Gaussian(-1.)
+    Gaussian(-1.0)
 
   with pytest.raises(ValueError):
-    Gaussian(np.array([1., 1.]))
+    Gaussian(np.array([1.0, 1.0]))
 
 
 def test_repr() -> None:
-  result = repr(Gaussian(1.))
+  result = repr(Gaussian(1.0))
   expected = "Gaussian(sn2=1.0)"
   assert result == expected
 
 
 def test_call() -> None:
-  likelihood = Gaussian(1.)
+  likelihood = Gaussian(1.0)
   likelihood(np.ones(10), np.zeros(10))
 
   with pytest.raises(ValueError):
@@ -46,12 +45,11 @@ def test_call() -> None:
 
 
 @testing.parameterize_goldens(
-    dict(
-        sn2=1.0,
-        y=np.linspace(0, 1, 10),
-        f=np.zeros(10),
-    ),
+  dict(
+    sn2=1.0,
+    y=np.linspace(0, 1, 10),
+    f=np.zeros(10),
+  ),
 )
 def test_goldens(sn2, y, f) -> Array:
   return Gaussian(sn2)(y, f)
-

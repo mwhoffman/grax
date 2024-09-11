@@ -1,5 +1,4 @@
-"""Tests for assertion checks.
-"""
+"""Tests for assertion checks."""
 
 import numpy as np
 import pytest
@@ -9,7 +8,7 @@ from grax.utils import checks
 
 def test_check_type() -> None:
   checks.check_type(1, int)
-  checks.check_type(1., [float, int])
+  checks.check_type(1.0, [float, int])
 
   with pytest.raises(ValueError):
     checks.check_type(1, float)
@@ -58,4 +57,3 @@ def test_check_positive() -> None:
 
   with pytest.raises(ValueError):
     checks.check_positive(-1 * np.ones((2, 2)))
-

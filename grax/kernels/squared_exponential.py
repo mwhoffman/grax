@@ -1,5 +1,4 @@
-"""Implementation of a simple, squared-exponential kernel.
-"""
+"""Implementation of a simple, squared-exponential kernel."""
 
 import jax.numpy as jnp
 
@@ -83,4 +82,3 @@ class SquaredExponential(base.Kernel):
     D = jnp.clip(z1 - 2 * jnp.matmul(x1, x2.T) + z2.T, 0)
     K = self.rho * jnp.exp(-D / 2)
     return K
-

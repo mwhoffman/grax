@@ -1,5 +1,4 @@
-"""Assertion checks.
-"""
+"""Assertion checks."""
 
 from collections.abc import Sequence
 
@@ -11,8 +10,8 @@ from grax.utils import repr
 
 
 def check_type(
-    array: ArrayLike,
-    expected_dtypes: DTypeLike | Sequence[DTypeLike],
+  array: ArrayLike,
+  expected_dtypes: DTypeLike | Sequence[DTypeLike],
 ) -> None:
   """Check the type of the given array.
 
@@ -35,37 +34,37 @@ def check_type(
       return
 
   raise ValueError(
-    f"Array dtype ({str(dtype)}) does not match an expected dtype: " +
-    f"{repr.join(expected_dtypes)}"
+    f"Array dtype ({str(dtype)}) does not match an expected dtype: "
+    + f"{repr.join(expected_dtypes)}"
   )
 
 
 def check_rank(
-    array: ArrayLike,
-    expected_ranks: int | set[int],
+  array: ArrayLike,
+  expected_ranks: int | set[int],
 ) -> None:
-    """Check the rank of a given array.
+  """Check the rank of a given array.
 
-    Raise a `ValueError` if `array` does not match the `expected_ranks`. If a
-    set of ranks is given then `array` must match one of them.
-    """
-    # Get the rank of the array.
-    rank = len(jnp.shape(array))
+  Raise a `ValueError` if `array` does not match the `expected_ranks`. If a
+  set of ranks is given then `array` must match one of them.
+  """
+  # Get the rank of the array.
+  rank = len(jnp.shape(array))
 
-    # Make sure we have a set of ranks.
-    if not isinstance(expected_ranks, set):
-        expected_ranks = {expected_ranks}
+  # Make sure we have a set of ranks.
+  if not isinstance(expected_ranks, set):
+    expected_ranks = {expected_ranks}
 
-    if rank not in expected_ranks:
-        raise ValueError(
-            f"Array rank ({rank}) does not match an expected rank: "
-            f"{repr.join(expected_ranks)}"
-        )
+  if rank not in expected_ranks:
+    raise ValueError(
+      f"Array rank ({rank}) does not match an expected rank: "
+      f"{repr.join(expected_ranks)}"
+    )
 
 
 def check_shape(
-    array: ArrayLike,
-    expected_shape: Sequence[int | None],
+  array: ArrayLike,
+  expected_shape: Sequence[int | None],
 ) -> None:
   """Check the shape of a given array.
 
@@ -76,19 +75,18 @@ def check_shape(
   # Fail early if we're not of the right rank.
   check_rank(array, len(expected_shape))
 
-  # Check each passed 
+  # Check each passed
   shape = jnp.shape(array)
   for dim, expected_dim in zip(shape, expected_shape):
     if expected_dim is not None and dim != expected_dim:
       raise ValueError(
-        f"Array shape ({repr.join(shape)}) does not match the expected shape: " +
-        f"({repr.join(expected_shape)})"
+        f"Array shape ({repr.join(shape)}) does not match the expected shape: "
+        + f"({repr.join(expected_shape)})"
       )
 
 
 def check_equal_shape(*arrays: ArrayLike) -> None:
-  """Check the shapes of all arrays match.
-  """
+  """Check the shapes of all arrays match."""
   if len(arrays) == 0:
     return
 
@@ -101,9 +99,9 @@ def check_equal_shape(*arrays: ArrayLike) -> None:
 
 
 def check_type_and_rank(
-    array: ArrayLike,
-    expected_dtypes: DTypeLike | Sequence[DTypeLike],
-    expected_ranks: int | set[int],
+  array: ArrayLike,
+  expected_dtypes: DTypeLike | Sequence[DTypeLike],
+  expected_ranks: int | set[int],
 ) -> None:
   """Check the dtype and rank of the given array.
 
@@ -116,9 +114,9 @@ def check_type_and_rank(
 
 
 def check_type_and_shape(
-    array: ArrayLike,
-    expected_dtypes: DTypeLike | Sequence[DTypeLike],
-    expected_shape: Sequence[int | None],
+  array: ArrayLike,
+  expected_dtypes: DTypeLike | Sequence[DTypeLike],
+  expected_shape: Sequence[int | None],
 ) -> None:
   """Check the dtype and shape of the given array.
 
@@ -131,9 +129,8 @@ def check_type_and_shape(
 
 
 def check_positive(
-    array: ArrayLike,
+  array: ArrayLike,
 ) -> None:
   """Check that the given array is positive."""
   if not jnp.all(jnp.greater(array, 0)):
     raise ValueError("Array is not positive")
-

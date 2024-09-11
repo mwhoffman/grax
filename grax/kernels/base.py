@@ -1,13 +1,11 @@
-"""Kernel base class.
-"""
+"""Kernel base class."""
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from grax import typing
 
 
 class Kernel(metaclass=ABCMeta):
-  """Definition of the kernel interface.
-  """
+  """Definition of the kernel interface."""
 
   @abstractmethod
   def __call__(
@@ -16,6 +14,4 @@ class Kernel(metaclass=ABCMeta):
     x2: typing.ArrayLike | None = None,
     diag: bool = False,
   ) -> typing.Array:
-    """Evaluate the kernel.
-    """
-
+    """Evaluate the kernel."""
