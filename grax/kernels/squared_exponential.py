@@ -3,9 +3,10 @@
 
 import jax.numpy as jnp
 
-from grax import checks
 from grax import typing
 from grax.kernels import base
+from grax.utils import checks
+from grax.utils import repr
 
 
 class SquaredExponential(base.Kernel):
@@ -45,10 +46,7 @@ class SquaredExponential(base.Kernel):
     if self._dim is not None:
       kwargs["dim"] = str(self._dim)
 
-    kwargs_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
-    type_str = f"{self.__class__.__name__}({kwargs_str})"
-
-    return type_str
+    return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
 
   @property
   def dim(self) -> int:

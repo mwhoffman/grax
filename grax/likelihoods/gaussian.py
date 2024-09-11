@@ -3,9 +3,10 @@
 
 import jax.numpy as jnp
 
-from grax import checks
 from grax import typing
 from grax.likelihoods import base
+from grax.utils import checks
+from grax.utils import repr
 
 
 class Gaussian(base.Likelihood):
@@ -20,6 +21,11 @@ class Gaussian(base.Likelihood):
 
     self.sn2 = sn2
 
+  def __repr__(self) -> str:
+    kwargs = dict()
+    kwargs["sn2"] = str(self.sn2)
+
+    return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
 
   def __call__(self, y: typing.ArrayLike, f: typing.ArrayLike):
     y = jnp.asarray(y)

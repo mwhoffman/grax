@@ -1,12 +1,13 @@
 """Assertion checks.
 """
 
-from typing import Any
-from collections.abc import Iterable, Sequence
-from grax.typing import ArrayLike, DTypeLike
+from collections.abc import Sequence
 
 import jax.dtypes
 import jax.numpy as jnp
+
+from grax.typing import ArrayLike, DTypeLike
+from grax.utils import repr
 
 
 def check_type(
@@ -34,8 +35,8 @@ def check_type(
       return
 
   raise ValueError(
-    f'Array dtype ({str(dtype)}) does not match an expected dtype: ' +
-    f'{_join(expected_dtypes)}'
+    f"Array dtype ({str(dtype)}) does not match an expected dtype: " +
+    f"{repr.join(expected_dtypes)}"
   )
 
 
@@ -57,8 +58,8 @@ def check_rank(
 
     if rank not in expected_ranks:
         raise ValueError(
-            f'Array rank ({rank}) does not match an expected rank: '
-            f'{_join(expected_ranks)}'
+            f"Array rank ({rank}) does not match an expected rank: "
+            f"{repr.join(expected_ranks)}"
         )
 
 
@@ -80,8 +81,8 @@ def check_shape(
   for dim, expected_dim in zip(shape, expected_shape):
     if expected_dim is not None and dim != expected_dim:
       raise ValueError(
-        f'Array shape ({_join(shape)}) does not match the expected shape: ' +
-        f'({_join(expected_shape)})'
+        f"Array shape ({repr.join(shape)}) does not match the expected shape: " +
+        f"({repr.join(expected_shape)})"
       )
 
 
@@ -134,11 +135,5 @@ def check_positive(
 ) -> None:
   """Check that the given array is positive."""
   if not jnp.all(jnp.greater(array, 0)):
-    raise ValueError('Array is not positive')
-
-
-def _join(seq: Iterable[Any]) -> str:
-  """Return a string representing any iterable as a comma separated list.
-  """
-  return ', '.join(str(x) for x in seq)
+    raise ValueError("Array is not positive")
 

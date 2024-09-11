@@ -22,6 +22,12 @@ def test_init() -> None:
     Gaussian(np.array([1., 1.]))
 
 
+def test_repr() -> None:
+  result = repr(Gaussian(1.))
+  expected = "Gaussian(sn2=1.0)"
+  assert result == expected
+
+
 def test_call() -> None:
   likelihood = Gaussian(1.)
   likelihood(np.ones(10), np.zeros(10))

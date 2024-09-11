@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from grax import checks
+from grax.utils import checks
 
 
 def test_check_type() -> None:
