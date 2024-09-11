@@ -25,7 +25,7 @@ class Gaussian(base.Likelihood):
 
     return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
 
-  def __call__(self, y: typing.ArrayLike, f: typing.ArrayLike):
+  def __call__(self, y: typing.ArrayLike, f: typing.ArrayLike) -> typing.Array:
     y = jnp.asarray(y)
     f = jnp.asarray(f)
 

@@ -27,8 +27,7 @@ class SquaredExponential(base.Kernel):
       if ell.ndim == 1:
         raise ValueError("dim cannot be specified if ell is non-scalar.")
 
-      elif dim <= 0:
-        raise ValueError("dim must be greater than zero.")
+      checks.check_positive(dim)
 
     elif ell.ndim == 0:
       raise ValueError("dim must be specified if ell is a scalar.")
