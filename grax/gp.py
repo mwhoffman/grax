@@ -40,8 +40,8 @@ class GP:
     self.mean = mean or means.Zero(dim=kernel.dim)
 
     # Storage for the data and posterior sufficent statistics.
-    self.data = None
-    self.post = None
+    self.data: GPData | None = None
+    self.post: GPPosterior | None = None
 
     if data is not None:
       self.add_data(*data)
