@@ -1,7 +1,7 @@
 """Small utilities for writing repr functions."""
 
-from typing import Any
 from collections.abc import Iterable
+from typing import Any
 
 
 def join(seq: Iterable[Any]) -> str:

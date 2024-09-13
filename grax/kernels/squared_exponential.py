@@ -17,6 +17,17 @@ class SquaredExponential(base.Kernel):
     ell: typing.ArrayLike,
     dim: int | None = None,
   ):
+    """Initialize a squared-exponential kernel.
+
+    Args:
+      rho: the output variance.
+      ell: the lengthscale of the kernel which determines how far away observing
+        one point influences another point (in the input space). ell can either
+        be a vector in which case each dimension has its own length scale, or a
+        scalar in which case all dimensions share the same lengthscale.
+      dim: an integer specifying the dimensionality of the kernel; this must be
+        specified if ell is a scalar.
+    """
     rho = jnp.asarray(rho)
     ell = jnp.asarray(ell)
 
@@ -25,12 +36,12 @@ class SquaredExponential(base.Kernel):
 
     if dim is not None:
       if ell.ndim == 1:
-        raise ValueError("dim cannot be specified if ell is non-scalar.")
+        raise checks.CheckError("dim cannot be specified if ell is non-scalar.")
 
       checks.check_positive(dim)
 
     elif ell.ndim == 0:
-      raise ValueError("dim must be specified if ell is a scalar.")
+      raise checks.CheckError("dim must be specified if ell is a scalar.")
 
     self.rho = rho
     self.ell = ell
@@ -48,22 +59,26 @@ class SquaredExponential(base.Kernel):
 
   @property
   def dim(self) -> int:
+    """The dimension of the kernel inputs."""
     return self.ell.shape[0] if self._dim is None else self._dim
 
   def __call__(
     self,
     x1: typing.ArrayLike,
     x2: typing.ArrayLike | None = None,
+    *,
     diag: bool = False,
   ) -> typing.Array:
+    """Evaluate the kernel on the given inputs."""
     x1 = jnp.asarray(x1)
     checks.check_type_and_shape(x1, typing.Float, (None, self.dim))
 
     if diag:
-      if x2 is None:
-        return jnp.full(x1.shape[0], self.rho)
-      else:
-        raise ValueError("the diagonal kernel is invalid for two input arrays.")
+      if x2 is not None:
+        msg = "the diagonal kernel is invalid for two input arrays."
+        raise checks.CheckError(msg)
+
+      return jnp.full(x1.shape[0], self.rho)
 
     x1 = x1 / self.ell
     z1 = jnp.sum(x1**2, axis=1, keepdims=True)

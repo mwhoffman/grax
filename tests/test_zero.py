@@ -5,12 +5,13 @@ import numpy.testing as nt
 import pytest
 
 from grax.means.zero import Zero
+from grax.utils import checks
 
 
 def test_init():
   Zero(1)
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     Zero(-1)
 
 
@@ -29,5 +30,5 @@ def test_call():
   nt.assert_equal(zeros0, np.zeros(10))
   nt.assert_equal(zeros1, np.zeros(10))
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     mean(np.ones((10, 2)))

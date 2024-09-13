@@ -1,7 +1,10 @@
 """Configuration for pytest."""
 
+import pytest
 
-def pytest_addoption(parser):
+
+def pytest_addoption(parser: pytest.Parser):
+  """Add options for pytest."""
   parser.addoption(
     "--save-goldens",
     action="store_true",

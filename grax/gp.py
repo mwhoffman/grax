@@ -1,9 +1,9 @@
 """Implementation of a GP."""
 
+from dataclasses import dataclass
+
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
-
-from dataclasses import dataclass
 
 from grax import kernels
 from grax import likelihoods
@@ -14,12 +14,14 @@ from grax.utils import checks
 
 @dataclass
 class GPData:
+  """Input/output data."""
   X: typing.Array
   Y: typing.Array
 
 
 @dataclass
-class GPPosterior:
+class GPStatistics:
+  """Sufficient statistics for making GP posterior predictions."""
   L: typing.Array
   a: typing.Array
   w: typing.Array
@@ -35,18 +37,44 @@ class GP:
     mean: means.Mean | None = None,
     data: tuple[typing.ArrayLike, typing.ArrayLike] | None = None,
   ):
+    """Initialize the GP with constituent models.
+
+    Args:
+      kernel: instance of `grax.kernels.Kernel` which models how correlated any
+        two inputs are.
+      likelihood: an instance of `grax.likelihoods.Gaussian` which models the
+        probability of an observed output given its latent function value.
+      mean: an instance of `grax.means.Mean` which defines the prior expected
+        output value of any input; if not given the mean is assumed to be zero.
+      data: initial input data of the form `(X, Y)`; this is equivalent to
+        instantiating the GP and calling `add_data(X, Y)`.
+    """
     self.kernel = kernel
     self.likelihood = likelihood
     self.mean = mean or means.Zero(dim=kernel.dim)
 
+    if self.kernel.dim != self.mean.dim:
+      raise checks.CheckError(
+        "The kernel and mean functions must have the same input dimensions"
+      )
+
     # Storage for the data and posterior sufficent statistics.
     self.data: GPData | None = None
-    self.post: GPPosterior | None = None
+    self.post: GPStatistics | None = None
 
     if data is not None:
       self.add_data(*data)
 
   def add_data(self, X: typing.ArrayLike, Y: typing.ArrayLike):
+    """Add observed data.
+
+    This will update the model's sufficient statistics so that posterior
+    predictions can be made conditioned on these observations.
+
+    Args:
+      X: observed inputs.
+      Y: observed outputs.
+    """
     X = jnp.asarray(X)
     Y = jnp.asarray(Y)
 
@@ -78,9 +106,20 @@ class GP:
       a = jla.cho_solve((L, True), r)
       w = jnp.ones_like(a)
 
-      self.post = GPPosterior(L, a, w)
+      self.post = GPStatistics(L, a, w)
 
   def predict(self, X: typing.ArrayLike) -> tuple[typing.Array, typing.Array]:
+    """Make predictions of the latent function at the given input points.
+
+    Args:
+      X: input points to make predictions at.
+
+    Returns:
+      A tuple of the form `(mu, s2)` consisting of the mean/expected predictions
+      as well as the variance in this prediction. Note: this is the variance of
+      the prediction itself, e.g. f(x) and does NOT include any observation
+      noise.
+    """
     X = jnp.asarray(X)
 
     checks.check_type_and_shape(X, typing.Float, (None, self.kernel.dim))

@@ -6,16 +6,19 @@ import testing
 
 from grax.kernels.squared_exponential import SquaredExponential
 from grax.typing import Array
+from grax.utils import checks
 
 
 def test_init():
-  with pytest.raises(ValueError):
+  SquaredExponential(1.0, 1.0, dim=1)
+
+  with pytest.raises(checks.CheckError):
     SquaredExponential(1.0, 1.0)
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     SquaredExponential(1.0, 1.0, dim=-1)
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     SquaredExponential(1.0, np.array([1.0, 1.0]), dim=1)
 
 
@@ -51,7 +54,7 @@ def test_call():
     assert kernel(x1).shape == (n, n)
     assert kernel(x1, diag=True).shape == (n,)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(checks.CheckError):
       kernel(x1, x2, diag=True)
 
 
@@ -74,4 +77,4 @@ def test_call():
   ),
 )
 def test_goldens(rho, ell, dim, x1, x2, diag) -> Array:
-  return SquaredExponential(rho, ell, dim)(x1, x2, diag)
+  return SquaredExponential(rho, ell, dim)(x1, x2, diag=diag)

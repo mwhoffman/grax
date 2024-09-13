@@ -1,7 +1,7 @@
 """Simple example."""
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from grax import gp
 from grax import kernels
@@ -9,13 +9,18 @@ from grax import likelihoods
 
 
 def main():
+  """Run the example."""
+
   # Define the function we want to model.
-  def f(x):
+  def f(x: np.ndarray) -> np.ndarray:
     return x * np.sin(x)
 
+  # Get an rng.
+  rng = np.random.default_rng()
+
   # Draw samples from the function.
-  X = 10 * np.random.rand(100)
-  Y = f(X) + np.random.randn(len(X))
+  X = rng.uniform(0, 10, size=100)
+  Y = f(X) + rng.normal(size=len(X))
   X = X[:, None]
 
   # Create our model.
@@ -29,7 +34,9 @@ def main():
   x = np.linspace(-2, 12, 1000)
   mu, s2 = model.predict(x[:, None])
 
-  # Plot it.
+  # Plot the samples and predictions.
+  plt.gcf()
+  plt.cla()
   plt.plot(x, f(x), linestyle="dotted", label="Latent function")
   plt.scatter(X.flatten(), Y, label="Observed data")
   plt.plot(x, mu, linestyle="-", label="Posterior mean")
@@ -40,6 +47,7 @@ def main():
   plt.xlabel("Inputs, X")
   plt.ylabel("Outputs, Y")
 
+  # Restyle the plot.
   ax = plt.gca()
   ax.spines["top"].set_visible(False)
   ax.spines["right"].set_visible(False)
@@ -48,6 +56,8 @@ def main():
   ax.yaxis.label.set_fontsize(16)
   [t.set_fontsize(12) for t in ax.get_xticklabels() + ax.get_yticklabels()]
   [t.set_fontsize(14) for t in ax.get_legend().get_texts()]
+
+  # Display the plot.
   plt.show()
 
 

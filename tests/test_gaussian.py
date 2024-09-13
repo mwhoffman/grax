@@ -6,18 +6,19 @@ import testing
 
 from grax.likelihoods.gaussian import Gaussian
 from grax.typing import Array
+from grax.utils import checks
 
 
 def test_init():
   Gaussian(1.0)
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     Gaussian(1)
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     Gaussian(-1.0)
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     Gaussian(np.array([1.0, 1.0]))
 
 
@@ -31,16 +32,16 @@ def test_call():
   likelihood = Gaussian(1.0)
   likelihood(np.ones(10), np.zeros(10))
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     likelihood(1.0, 1.0)
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     likelihood(np.ones(10, dtype=int), np.zeros(10))
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     likelihood(np.ones(10), np.zeros(10, dtype=int))
 
-  with pytest.raises(ValueError):
+  with pytest.raises(checks.CheckError):
     likelihood(np.ones(10), np.zeros(5))
 
 

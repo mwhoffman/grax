@@ -12,6 +12,11 @@ class Gaussian(base.Likelihood):
   """The Gaussian likelihood, i.e. for standard GP regression."""
 
   def __init__(self, sn2: typing.ArrayLike):
+    """Initialize a Gaussian likelihood model.
+
+    Args:
+      sn2: the noise variance.
+    """
     sn2 = jnp.asarray(sn2)
 
     checks.check_type_and_rank(sn2, typing.Float, 0)
@@ -26,6 +31,7 @@ class Gaussian(base.Likelihood):
     return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
 
   def __call__(self, y: typing.ArrayLike, f: typing.ArrayLike) -> typing.Array:
+    """Evaluate the marginal log-likelihood."""
     y = jnp.asarray(y)
     f = jnp.asarray(f)
 

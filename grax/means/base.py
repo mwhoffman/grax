@@ -1,6 +1,8 @@
 """Mean function base class."""
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
+
 from grax import typing
 
 
@@ -12,12 +14,19 @@ class Mean(metaclass=ABCMeta):
     self,
     x: typing.ArrayLike,
   ) -> typing.Array:
-    """Evaluate the mean and return the output."""
+    """Evaluate the mean on the given inputs.
+
+    Args:
+      x: an n-array containing the input points.
+
+    Returns:
+      an n-vector of the function evaluated at the given points.
+    """
 
   @property
   @abstractmethod
   def dim(self) -> int:
-    """Return the input dimension."""
+    """The input dimension."""
 
     # Implicitly this assumes mean functions are defined over a Euclidean space.
     # This is added just so we can check and make sure that the inputs for

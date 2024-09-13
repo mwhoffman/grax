@@ -5,17 +5,22 @@ from collections.abc import Sequence
 import jax.dtypes
 import jax.numpy as jnp
 
-from grax.typing import ArrayLike, DTypeLike
+from grax.typing import ArrayLike
+from grax.typing import DTypeLike
 from grax.utils import repr
+
+
+class CheckError(ValueError):
+  """Error thrown when a check fails."""
 
 
 def check_type(
   array: ArrayLike,
   expected_dtypes: DTypeLike | Sequence[DTypeLike],
-) -> None:
+):
   """Check the type of the given array.
 
-  Raise a `ValueError` if `array` does not match the `expected_dtypes`. If
+  Raise a `CheckError` if `array` does not match the `expected_dtypes`. If
   multiple dtypes are given then `array` must match one of them.
   """
   # Get the dtype of the given array.
@@ -33,19 +38,19 @@ def check_type(
     if jnp.issubdtype(dtype, expected_dtype):
       return
 
-  raise ValueError(
-    f"Array dtype ({str(dtype)}) does not match an expected dtype: "
-    + f"{repr.join(expected_dtypes)}"
+  raise CheckError(
+    f"Array dtype ({dtype!s}) does not match an expected dtype: "
+    f"{repr.join(expected_dtypes)}"
   )
 
 
 def check_rank(
   array: ArrayLike,
   expected_ranks: int | set[int],
-) -> None:
+):
   """Check the rank of a given array.
 
-  Raise a `ValueError` if `array` does not match the `expected_ranks`. If a
+  Raise a `CheckError` if `array` does not match the `expected_ranks`. If a
   set of ranks is given then `array` must match one of them.
   """
   # Get the rank of the array.
@@ -56,7 +61,7 @@ def check_rank(
     expected_ranks = {expected_ranks}
 
   if rank not in expected_ranks:
-    raise ValueError(
+    raise CheckError(
       f"Array rank ({rank}) does not match an expected rank: "
       f"{repr.join(expected_ranks)}"
     )
@@ -65,10 +70,10 @@ def check_rank(
 def check_shape(
   array: ArrayLike,
   expected_shape: Sequence[int | None],
-) -> None:
+):
   """Check the shape of a given array.
 
-  Raise a `ValueError` if `array` does not match the `expected_shape`. If any of
+  Raise a `CheckError` if `array` does not match the `expected_shape`. If any of
   the dimensions of `expected_shape` are `None` then the corresponding shape of
   `array` is ignored.
   """
@@ -79,13 +84,13 @@ def check_shape(
   shape = jnp.shape(array)
   for dim, expected_dim in zip(shape, expected_shape):
     if expected_dim is not None and dim != expected_dim:
-      raise ValueError(
+      raise CheckError(
         f"Array shape ({repr.join(shape)}) does not match the expected shape: "
-        + f"({repr.join(expected_shape)})"
+        f"({repr.join(expected_shape)})"
       )
 
 
-def check_equal_shape(*arrays: ArrayLike) -> None:
+def check_equal_shape(*arrays: ArrayLike):
   """Check the shapes of all arrays match."""
   if len(arrays) == 0:
     return
@@ -102,10 +107,10 @@ def check_type_and_rank(
   array: ArrayLike,
   expected_dtypes: DTypeLike | Sequence[DTypeLike],
   expected_ranks: int | set[int],
-) -> None:
+):
   """Check the dtype and rank of the given array.
 
-  Raise a `ValueError` if `array` does not match the `expected_dtypes` and the
+  Raise a `CheckError` if `array` does not match the `expected_dtypes` and the
   `expected_ranks`. This is a convenience function calling `check_type` and
   `check_rank`; see those functions for more details.
   """
@@ -117,10 +122,10 @@ def check_type_and_shape(
   array: ArrayLike,
   expected_dtypes: DTypeLike | Sequence[DTypeLike],
   expected_shape: Sequence[int | None],
-) -> None:
+):
   """Check the dtype and shape of the given array.
 
-  Raise a `ValueError` if `array` does not match the `expected_dtypes` and the
+  Raise a `CheckError` if `array` does not match the `expected_dtypes` and the
   `expected_shape`. This is a convenience function calling `check_type` and
   `check_shape`; see those functions for more details.
   """
@@ -130,7 +135,7 @@ def check_type_and_shape(
 
 def check_positive(
   array: ArrayLike,
-) -> None:
+):
   """Check that the given array is positive."""
   if not jnp.all(jnp.greater(array, 0)):
-    raise ValueError("Array is not positive")
+    raise CheckError("Array is not positive")

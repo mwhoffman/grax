@@ -1,13 +1,15 @@
 """Test helpers."""
 
 import inspect
+import pathlib
+from typing import Callable
+
 import numpy as np
 import numpy.testing as nt
-import os.path
 import pytest
 
 
-def parameterize_goldens(*inputs: dict):
+def parameterize_goldens(*inputs: dict) -> Callable:
   """Parameterize a collection of golden tests.
 
   Given a collection of testing `inputs` this provides a wrapper of the form
@@ -16,38 +18,37 @@ def parameterize_goldens(*inputs: dict):
   `numpy.testing.assert_allclose`.
   """
   # Find the directory storing goldens for the current module.
-  dirname, basename = os.path.split(inspect.stack()[1].filename)
-  basename = os.path.splitext(basename)[0]
-  goldendir = os.path.join(dirname, "goldens", basename)
+  path = pathlib.Path(inspect.stack()[1].filename)
+  goldendir = path.parent / "goldens" / path.stem
 
   # Create the decorator.
-  def parameterize(func):
+  def parameterize(func: Callable) -> Callable:
     # The following wrapper will be applied for each individual input that
     # parameterizes the test case.
-    @pytest.mark.parametrize("n, input", enumerate(inputs))
-    def wrapper(n, input, request):
+    @pytest.mark.parametrize(("n", "input_"), enumerate(inputs))
+    def wrapper(n: int, input_: dict, request: pytest.FixtureRequest):
       # Check for pytest options.
       save_goldens = request.config.getoption("--save-goldens")
       update_goldens = request.config.getoption("--update-goldens")
 
       # Evaluate the wrapped function.
-      output = func(**input)
+      output = func(**input_)
 
       # Use the function name and the number of parameterized inputs to find the
       # file storing the golden output.
-      goldenfile = os.path.join(goldendir, func.__name__ + f"_{n}.npy")
+      goldenfile = goldendir / f"{func.__name__}_{n}.npy"
 
       try:
         # Try to load the golden output.
-        with open(goldenfile, "rb") as f:
+        with goldenfile.open("rb") as f:
           golden = np.load(f)
 
       except FileNotFoundError:
         if save_goldens:
           # If --save-goldens is given and no golden file exists save the
           # goldens and mark the test as skipped.
-          os.makedirs(os.path.dirname(goldenfile), exist_ok=True)
-          with open(goldenfile, "wb") as f:
+          goldenfile.parent.mkdir(parents=True)
+          with goldenfile.open("wb") as f:
             np.save(f, output)
           pytest.skip("Saving over empty golden file")
 
@@ -63,8 +64,8 @@ def parameterize_goldens(*inputs: dict):
         if update_goldens:
           # If --update-goldens is given save the goldens and mark the test as
           # skipped.
-          os.makedirs(os.path.dirname(goldenfile), exist_ok=True)
-          with open(goldenfile, "wb") as f:
+          goldenfile.parent.mkdir(parents=True)
+          with goldenfile.open("wb") as f:
             np.save(f, output)
           pytest.skip("Saving over a failing golden file")
 
