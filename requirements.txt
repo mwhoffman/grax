@@ -8,7 +8,7 @@ jax==0.4.31
     # via grax (pyproject.toml)
 jaxlib==0.4.31
     # via jax
-ml-dtypes==0.4.0
+ml-dtypes==0.5.0
     # via
     #   jax
     #   jaxlib
