@@ -25,12 +25,10 @@ jobs:
           pip install -e .
 
       - name: Check types
-        run: mypy ./grax ./tests
+        run: mypy ./grax ./tests ./examples --enable-incomplete-feature=NewGenericSyntax
 
       - name: Run tests
         run: pytest ./tests
 
-      - name: Upload coverage data to coveralls
-        run: coveralls --service=github
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run coveralls
+        uses: coverallsapp/github-action@v2
