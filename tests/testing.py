@@ -47,7 +47,7 @@ def parameterize_goldens(*inputs: dict) -> Callable:
         if save_goldens:
           # If --save-goldens is given and no golden file exists save the
           # goldens and mark the test as skipped.
-          goldenfile.parent.mkdir(parents=True)
+          goldenfile.parent.mkdir(parents=True, exist_ok=True)
           with goldenfile.open("wb") as f:
             np.save(f, output)
           pytest.skip("Saving over empty golden file")
@@ -64,7 +64,7 @@ def parameterize_goldens(*inputs: dict) -> Callable:
         if update_goldens:
           # If --update-goldens is given save the goldens and mark the test as
           # skipped.
-          goldenfile.parent.mkdir(parents=True)
+          goldenfile.parent.mkdir(parents=True, exist_ok=True)
           with goldenfile.open("wb") as f:
             np.save(f, output)
           pytest.skip("Saving over a failing golden file")

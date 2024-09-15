@@ -1,12 +1,12 @@
 """Mean function base class."""
 
-from abc import ABCMeta
 from abc import abstractmethod
 
+from grax import module
 from grax import typing
 
 
-class Mean(metaclass=ABCMeta):
+class Mean(module.Module):
   """Definition of the mean function interface."""
 
   @abstractmethod

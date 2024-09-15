@@ -7,6 +7,8 @@ from grax.kernels import base
 from grax.utils import checks
 from grax.utils import repr
 
+type Params = tuple[typing.Array, typing.Array]
+
 
 class SquaredExponential(base.Kernel):
   """The squared-exponential kernel."""
@@ -56,6 +58,10 @@ class SquaredExponential(base.Kernel):
       kwargs["dim"] = str(self._dim)
 
     return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
+
+  def get_params(self) -> Params:
+    """Return the parameters of the model."""
+    return (self.rho, self.ell)
 
   @property
   def dim(self) -> int:

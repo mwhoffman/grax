@@ -21,6 +21,10 @@ def test_repr():
   assert result == expected
 
 
+def test_get_params():
+  assert Zero(1).get_params() == ()
+
+
 def test_call():
   mean = Zero(3)
 

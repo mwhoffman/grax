@@ -1,8 +1,10 @@
 """Tests for the GP."""
 
 import numpy as np
+import numpy.testing as nt
 import pytest
 import testing
+from jax import tree
 
 from grax import gp
 from grax import kernels
@@ -25,6 +27,30 @@ def test_init():
     gp.GP(kernel, likelihood, means.Zero(dim=2))
 
 
+def test_get_params():
+  # Create the expected parameters.
+  expected = (
+    (1.0, np.array([1.0, 1.0])),
+    (1.0,),
+    ()
+  )
+
+  # Create a GP model to match.
+  params = gp.GP(
+    kernels.SquaredExponential(*expected[0]),
+    likelihoods.Gaussian(*expected[1])
+  ).get_params()
+
+  # Make sure the structures match.
+  vals1, struct1 = tree.flatten(expected)
+  vals2, struct2 = tree.flatten(params)
+
+  # Make sure the leaves match.
+  assert struct1 == struct2
+  for val1, val2 in zip(vals1, vals2):
+    nt.assert_allclose(val1, val2)
+
+
 def test_add_data():
   rng = np.random.default_rng()
 
@@ -35,8 +61,8 @@ def test_add_data():
     mean = means.Zero(dim=dim)
     model = gp.GP(kernel, likelihood, mean)
 
-    # Ensure update properly does nothing if there is no data.
-    model._update()  # noqa: SLF001
+    # Make sure we don't compute stats with no data.
+    assert model._get_stats() is None
 
     # Ensure we can add initial data.
     X = rng.uniform(size=(5, dim))
@@ -53,6 +79,7 @@ def test_add_data():
     Y = rng.normal(size=len(X))
     with pytest.raises(checks.CheckError):
       model.add_data(X, Y)
+
 
 def test_predict():
   rng = np.random.default_rng()
@@ -81,10 +108,38 @@ def test_predict():
     assert mu.shape == (len(X),)
     assert s2.shape == (len(X),)
 
+    # Make predictions again which should re-use the cache.
+    X = rng.uniform(size=(10, dim))
+    mu, s2 = model.predict(X)
+    assert mu.shape == (len(X),)
+    assert s2.shape == (len(X),)
+
     # Predictions should fail if the input dimensions are wrong.
     X = rng.uniform(size=(10, dim+1))
     with pytest.raises(checks.CheckError):
       model.predict(X)
+
+
+def test_log_likelihood():
+  rng = np.random.default_rng()
+
+  for dim in range(1, 3+1):
+    # Initialize a GP model.
+    kernel = kernels.SquaredExponential(1.0, 1.0, dim=dim)
+    likelihood = likelihoods.Gaussian(1.0)
+    mean = means.Zero(dim=dim)
+    model = gp.GP(kernel, likelihood, mean)
+
+    assert model.log_likelihood() == 0.0
+
+    # Add data.
+    X = rng.uniform(size=(5, dim))
+    Y = rng.normal(size=len(X))
+    model.add_data(X, Y)
+
+    # Evaluate the log-likelihood.
+    model.log_likelihood()
+
 
 @testing.parameterize_goldens(
   dict(
@@ -95,7 +150,21 @@ def test_predict():
     Z=np.linspace(0, 1, 100)[:, None],
   ),
 )
-def test_goldens(
+def test_golden_predict(
   kernel, likelihood, X, Y, Z
 ) -> tuple[typing.Array, typing.Array]:
   return gp.GP(kernel, likelihood, data=(X, Y)).predict(Z)
+
+
+@testing.parameterize_goldens(
+  dict(
+    kernel=kernels.SquaredExponential(1.0, 1.0, dim=1),
+    likelihood=likelihoods.Gaussian(1.0),
+    X=np.linspace(0, 1, 10)[:, None],
+    Y=np.zeros(10),
+  ),
+)
+def test_golden_log_likelihood(
+  kernel, likelihood, X, Y
+) -> typing.Array:
+  return gp.GP(kernel, likelihood, data=(X, Y)).log_likelihood()

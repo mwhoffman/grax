@@ -7,6 +7,8 @@ from grax.likelihoods import base
 from grax.utils import checks
 from grax.utils import repr
 
+type Params = tuple[typing.Array]
+
 
 class Gaussian(base.Likelihood):
   """The Gaussian likelihood, i.e. for standard GP regression."""
@@ -29,6 +31,10 @@ class Gaussian(base.Likelihood):
     kwargs["sn2"] = str(self.sn2)
 
     return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
+
+  def get_params(self) -> Params:
+    """Return the parameters of the model."""
+    return (self.sn2,)
 
   def __call__(self, y: typing.ArrayLike, f: typing.ArrayLike) -> typing.Array:
     """Evaluate the marginal log-likelihood."""

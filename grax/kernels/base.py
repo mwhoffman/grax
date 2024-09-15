@@ -1,12 +1,12 @@
 """Kernel base class."""
 
-from abc import ABCMeta
 from abc import abstractmethod
 
+from grax import module
 from grax import typing
 
 
-class Kernel(metaclass=ABCMeta):
+class Kernel(module.Module):
   """Definition of the kernel interface."""
 
   @abstractmethod

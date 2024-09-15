@@ -1,6 +1,7 @@
 """Implementation of a GP."""
 
 from dataclasses import dataclass
+from typing import Any
 
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
@@ -8,8 +9,12 @@ import jax.scipy.linalg as jla
 from grax import kernels
 from grax import likelihoods
 from grax import means
+from grax import module
 from grax import typing
 from grax.utils import checks
+
+# TODO: properly type this.
+type Params = tuple[Any, Any, Any]
 
 
 @dataclass
@@ -28,7 +33,7 @@ class GPStatistics:
   w: typing.Array
 
 
-class GP:
+class GP(module.Module):
   """Implementation of a GP."""
 
   def __init__(
@@ -59,12 +64,22 @@ class GP:
         "The kernel and mean functions must have the same input dimensions"
       )
 
-    # Storage for the data and posterior sufficent statistics.
+    # Storage for the data.
     self.data: GPData | None = None
-    self.post: GPStatistics | None = None
+
+    # Cache the posterior statistics for repeated predictions.
+    self._stats : GPStatistics | None = None
 
     if data is not None:
       self.add_data(*data)
+
+  def get_params(self) -> Params:
+    """Return a flattened representation of the model."""
+    return (
+      self.kernel.get_params(),
+      self.likelihood.get_params(),
+      self.mean.get_params(),
+    )
 
   def add_data(self, X: typing.ArrayLike, Y: typing.ArrayLike):
     """Add observed data.
@@ -90,24 +105,30 @@ class GP:
       self.data.X = jnp.r_[self.data.X, X]
       self.data.Y = jnp.r_[self.data.Y, Y]
 
-    # Update the sufficient statistics.
-    self._update()
+    # Get rid of previous stats so that we recompute them during the next
+    # prediction.
+    self._stats = None
 
-  def _update(self):
-    if self.data is not None:
-      # Get the kernel plus any noise.
-      K = self.kernel(self.data.X)
-      diag = jnp.diag_indices_from(K)
-      K = K.at[diag].set(K.at[diag].get() + self.likelihood.sn2)
+    # TODO: we can also incrementally update the Cholesky when data is added,
+    # but this will need to be recomputed from scratch when computing gradients.
 
-      # Get the residual of the observations.
-      r = self.data.Y - self.mean(self.data.X)
+  def _get_stats(self) -> GPStatistics | None:
+    if self.data is None:
+      return None
 
-      L = jla.cholesky(K, lower=True)
-      a = jla.cho_solve((L, True), r)
-      w = jnp.ones_like(a)
+    # Get the kernel plus any noise.
+    K = self.kernel(self.data.X)
+    diag = jnp.diag_indices_from(K)
+    K = K.at[diag].set(K.at[diag].get() + self.likelihood.sn2)
 
-      self.post = GPStatistics(L, r, a, w)
+    # Get the residual of the observations.
+    r = self.data.Y - self.mean(self.data.X)
+
+    L = jla.cholesky(K, lower=True)
+    a = jla.cho_solve((L, True), r)
+    w = jnp.ones_like(a)
+
+    return GPStatistics(L, r, a, w)
 
   def predict(self, X: typing.ArrayLike) -> tuple[typing.Array, typing.Array]:
     """Make predictions of the latent function at the given input points.
@@ -129,37 +150,43 @@ class GP:
     mu = self.mean(X)
     s2 = self.kernel(X, diag=True)
 
-    # if we have data compute the posterior
-    if self.post is not None:
-      # If post is not None we know the data will be as well, this is just here
-      # to help with typing.
-      assert self.data is not None
+    # Return early if we have no data (i.e. these are prior predictions).
+    if self.data is None:
+      return mu, s2
 
-      # Perform the intermediate computations.
-      K = self.kernel(self.data.X, X)
-      w = self.post.w.reshape(-1, 1)
-      V = jla.solve_triangular(self.post.L, w*K, lower=True)
+    # Recompute the statistics if we haven't cached them. Since we've already
+    # checked that self.data is not None, stats cannot be None. The assert is
+    # only here to help with type checking.
+    if self._stats is None:
+      self._stats = self._get_stats()
+      assert self._stats is not None
 
-      # Adjust the mean and shrink the variance.
-      mu = mu + K.T @ self.post.a
-      s2 = s2 - jnp.sum(V**2, axis=0)
+    # Perform the intermediate computations.
+    K = self.kernel(self.data.X, X)
+    w = self._stats.w.reshape(-1, 1)
+    V = jla.solve_triangular(self._stats.L, w*K, lower=True)
+
+    # Adjust the mean and shrink the variance.
+    mu = mu + K.T @ self._stats.a
+    s2 = s2 - jnp.sum(V**2, axis=0)
 
     return mu, s2
 
   def log_likelihood(self) -> typing.Array:
     """Return the log-likelihood of the observed data."""
-
-    if self.post is None:
+    if self.data is None:
       return jnp.array(0.0)
 
-    # Just help the typechecker; if post is not None then data must be as well.
-    assert self.data is not None
+    # Get the stats. And again, data is not None, so stats won't be None and the
+    # assert is only helping type checking.
+    stats = self._get_stats()
+    assert stats is not None
 
     # Get the diagonal of the cholesky.
-    L_diag = self.post.L.at[jnp.diag_indices_from(self.post.L)].get()
+    L_diag = stats.L.at[jnp.diag_indices_from(stats.L)].get()
 
     return (
-      -0.5 * jnp.inner(self.post.a, self.post.r)
+      -0.5 * jnp.inner(stats.a, stats.r)
       - 0.5 * jnp.log(2 * jnp.pi) * self.data.X.shape[0]
       - jnp.sum(jnp.log(L_diag))
     )
