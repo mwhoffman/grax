@@ -23,6 +23,7 @@ class GPData:
 class GPStatistics:
   """Sufficient statistics for making GP posterior predictions."""
   L: typing.Array
+  r: typing.Array
   a: typing.Array
   w: typing.Array
 
@@ -106,7 +107,7 @@ class GP:
       a = jla.cho_solve((L, True), r)
       w = jnp.ones_like(a)
 
-      self.post = GPStatistics(L, a, w)
+      self.post = GPStatistics(L, r, a, w)
 
   def predict(self, X: typing.ArrayLike) -> tuple[typing.Array, typing.Array]:
     """Make predictions of the latent function at the given input points.
@@ -144,3 +145,21 @@ class GP:
       s2 = s2 - jnp.sum(V**2, axis=0)
 
     return mu, s2
+
+  def log_likelihood(self) -> typing.Array:
+    """Return the log-likelihood of the observed data."""
+
+    if self.post is None:
+      return jnp.array(0.0)
+
+    # Just help the typechecker; if post is not None then data must be as well.
+    assert self.data is not None
+
+    # Get the diagonal of the cholesky.
+    L_diag = self.post.L.at[jnp.diag_indices_from(self.post.L)].get()
+
+    return (
+      -0.5 * jnp.inner(self.post.a, self.post.r)
+      - 0.5 * jnp.log(2 * jnp.pi) * self.data.X.shape[0]
+      - jnp.sum(jnp.log(L_diag))
+    )
