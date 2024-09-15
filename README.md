@@ -3,7 +3,7 @@
 [![tests](https://github.com/mwhoffman/grax/actions/workflows/tests.yml/badge.svg)][tests]
 [![coverage](https://img.shields.io/coverallsCoverage/github/mwhoffman/grax)][coverage]
 
-[coverage]: https://github.com/mwhoffman/grax/actions/workflows/tests.yml
+[tests]: https://github.com/mwhoffman/grax/actions/workflows/tests.yml
 [coverage]: https://coveralls.io/github/mwhoffman/grax?branch=main
 
 A simple GP package using python and JAX.
