@@ -25,7 +25,7 @@ jobs:
           pip install -e .
 
       - name: Check types
-        run: mypy ./grax ./tests ./examples --enable-incomplete-feature=NewGenericSyntax
+        run: mypy ./grax ./tests ./examples
 
       - name: Run tests
         run: pytest ./tests
