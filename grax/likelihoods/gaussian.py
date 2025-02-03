@@ -5,9 +5,6 @@ import jax.numpy as jnp
 from grax import typing
 from grax.likelihoods import base
 from grax.utils import checks
-from grax.utils import repr
-
-type Params = tuple[typing.Array]
 
 
 class Gaussian(base.Likelihood):
@@ -25,16 +22,6 @@ class Gaussian(base.Likelihood):
     checks.check_positive(sn2)
 
     self.sn2 = sn2
-
-  def __repr__(self) -> str:
-    kwargs = dict()
-    kwargs["sn2"] = str(self.sn2)
-
-    return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
-
-  def get_params(self) -> Params:
-    """Return the parameters of the model."""
-    return (self.sn2,)
 
   def __call__(self, y: typing.ArrayLike, f: typing.ArrayLike) -> typing.Array:
     """Evaluate the marginal log-likelihood."""

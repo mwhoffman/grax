@@ -2,11 +2,12 @@
 
 from abc import abstractmethod
 
-from grax import module
+from flax import nnx
+
 from grax import typing
 
 
-class Kernel(module.Module):
+class Kernel(nnx.Module):
   """Definition of the kernel interface."""
 
   @abstractmethod

@@ -2,11 +2,12 @@
 
 from abc import abstractmethod
 
-from grax import module
+from flax import nnx
+
 from grax import typing
 
 
-class Mean(module.Module):
+class Mean(nnx.Module):
   """Definition of the mean function interface."""
 
   @abstractmethod

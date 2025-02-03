@@ -5,9 +5,6 @@ import jax.numpy as jnp
 from grax import typing
 from grax.means import base
 from grax.utils import checks
-from grax.utils import repr
-
-type Params = tuple[()]
 
 
 class Zero(base.Mean):
@@ -30,15 +27,6 @@ class Zero(base.Mean):
   def dim(self) -> int:
     """Return the input dimension."""
     return self._dim
-
-  def __repr__(self) -> str:
-    kwargs = dict()
-    kwargs["dim"] = str(self.dim)
-    return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
-
-  def get_params(self) -> Params:
-    """Return the parameters of the model."""
-    return ()
 
   def __call__(self, x: typing.ArrayLike) -> typing.Array:
     """Evaluate the mean on the given inputs."""

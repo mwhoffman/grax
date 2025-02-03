@@ -15,16 +15,6 @@ def test_init():
     Zero(-1)
 
 
-def test_repr():
-  result = repr(Zero(1))
-  expected = "Zero(dim=1)"
-  assert result == expected
-
-
-def test_get_params():
-  assert Zero(1).get_params() == ()
-
-
 def test_call():
   mean = Zero(3)
 

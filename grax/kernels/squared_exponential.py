@@ -5,9 +5,6 @@ import jax.numpy as jnp
 from grax import typing
 from grax.kernels import base
 from grax.utils import checks
-from grax.utils import repr
-
-type Params = tuple[typing.Array, typing.Array]
 
 
 class SquaredExponential(base.Kernel):
@@ -48,20 +45,6 @@ class SquaredExponential(base.Kernel):
     self.rho = rho
     self.ell = ell
     self._dim = dim
-
-  def __repr__(self) -> str:
-    kwargs = dict()
-    kwargs["rho"] = str(self.rho.tolist())
-    kwargs["ell"] = str(self.ell.tolist())
-
-    if self._dim is not None:
-      kwargs["dim"] = str(self._dim)
-
-    return f"{self.__class__.__name__}({repr.join_dict(kwargs)})"
-
-  def get_params(self) -> Params:
-    """Return the parameters of the model."""
-    return (self.rho, self.ell)
 
   @property
   def dim(self) -> int:

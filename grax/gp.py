@@ -1,20 +1,17 @@
 """Implementation of a GP."""
 
 from dataclasses import dataclass
-from typing import Any
 
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 
+from flax import nnx
+
 from grax import kernels
 from grax import likelihoods
 from grax import means
-from grax import module
 from grax import typing
 from grax.utils import checks
-
-# TODO: properly type this.
-type Params = tuple[Any, Any, Any]
 
 
 @dataclass
@@ -33,7 +30,7 @@ class GPStatistics:
   w: typing.Array
 
 
-class GP(module.Module):
+class GP(nnx.Module):
   """Implementation of a GP."""
 
   def __init__(
@@ -72,14 +69,6 @@ class GP(module.Module):
 
     if data is not None:
       self.add_data(*data)
-
-  def get_params(self) -> Params:
-    """Return a flattened representation of the model."""
-    return (
-      self.kernel.get_params(),
-      self.likelihood.get_params(),
-      self.mean.get_params(),
-    )
 
   def add_data(self, X: typing.ArrayLike, Y: typing.ArrayLike):
     """Add observed data.

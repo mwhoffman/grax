@@ -7,7 +7,6 @@ import jax.numpy as jnp
 
 from grax.typing import ArrayLike
 from grax.typing import DTypeLike
-from grax.utils import repr
 
 
 class CheckError(ValueError):
@@ -40,7 +39,7 @@ def check_type(
 
   raise CheckError(
     f"Array dtype ({dtype!s}) does not match an expected dtype: "
-    f"{repr.join(expected_dtypes)}"
+    f"{tuple(expected_dtypes)}"
   )
 
 
@@ -63,7 +62,7 @@ def check_rank(
   if rank not in expected_ranks:
     raise CheckError(
       f"Array rank ({rank}) does not match an expected rank: "
-      f"{repr.join(expected_ranks)}"
+      f"{tuple(expected_ranks)}"
     )
 
 
@@ -85,8 +84,8 @@ def check_shape(
   for dim, expected_dim in zip(shape, expected_shape):
     if expected_dim is not None and dim != expected_dim:
       raise CheckError(
-        f"Array shape ({repr.join(shape)}) does not match the expected shape: "
-        f"({repr.join(expected_shape)})"
+        f"Array shape {shape} does not match the expected shape: "
+        f"{expected_shape}"
       )
 
 

@@ -2,11 +2,12 @@
 
 from abc import abstractmethod
 
-from grax import module
+from flax import nnx
+
 from grax import typing
 
 
-class Likelihood(module.Module):
+class Likelihood(nnx.Module):
   """Definition of the interface for marginal log-likelihoods."""
 
   @abstractmethod

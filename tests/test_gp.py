@@ -1,10 +1,8 @@
 """Tests for the GP."""
 
 import numpy as np
-import numpy.testing as nt
 import pytest
 import testing
-from jax import tree
 
 from grax import gp
 from grax import kernels
@@ -25,30 +23,6 @@ def test_init():
 
   with pytest.raises(checks.CheckError):
     gp.GP(kernel, likelihood, means.Zero(dim=2))
-
-
-def test_get_params():
-  # Create the expected parameters.
-  expected = (
-    (1.0, np.array([1.0, 1.0])),
-    (1.0,),
-    ()
-  )
-
-  # Create a GP model to match.
-  params = gp.GP(
-    kernels.SquaredExponential(*expected[0]),
-    likelihoods.Gaussian(*expected[1])
-  ).get_params()
-
-  # Make sure the structures match.
-  vals1, struct1 = tree.flatten(expected)
-  vals2, struct2 = tree.flatten(params)
-
-  # Make sure the leaves match.
-  assert struct1 == struct2
-  for val1, val2 in zip(vals1, vals2):
-    nt.assert_allclose(val1, val2)
 
 
 def test_add_data():
