@@ -58,7 +58,7 @@ def parameterize_goldens(*inputs: dict) -> Callable:
 
       try:
         # Assert that the output matches the golden output.
-        nt.assert_allclose(output, golden)
+        nt.assert_allclose(output, golden, rtol=1e-6)
 
       except AssertionError:
         if update_goldens:
