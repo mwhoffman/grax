@@ -5,7 +5,7 @@ import pytest
 import testing
 
 from grax.kernels.squared_exponential import SquaredExponential
-from grax.typing import Array
+from grax.types import Array
 from grax.utils import checks
 
 

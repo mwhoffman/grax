@@ -5,7 +5,7 @@ import pytest
 import testing
 
 from grax.likelihoods.gaussian import Gaussian
-from grax.typing import Array
+from grax.types import Array
 from grax.utils import checks
 
 

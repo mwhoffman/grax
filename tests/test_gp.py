@@ -8,7 +8,7 @@ from grax import gp
 from grax import kernels
 from grax import likelihoods
 from grax import means
-from grax import typing
+from grax import types
 from grax.utils import checks
 
 
@@ -126,7 +126,7 @@ def test_log_likelihood():
 )
 def test_golden_predict(
   kernel, likelihood, X, Y, Z
-) -> tuple[typing.Array, typing.Array]:
+) -> tuple[types.Array, types.Array]:
   return gp.GP(kernel, likelihood, data=(X, Y)).predict(Z)
 
 
@@ -140,5 +140,5 @@ def test_golden_predict(
 )
 def test_golden_log_likelihood(
   kernel, likelihood, X, Y
-) -> typing.Array:
+) -> types.Array:
   return gp.GP(kernel, likelihood, data=(X, Y)).log_likelihood()
