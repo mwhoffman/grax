@@ -19,6 +19,9 @@ class GPData:
   X: types.Array
   Y: types.Array
 
+  def __repr__(self) -> str:
+    return f"<GPData length={self.X.shape[0]}, dim={self.X.shape[1]}>"
+
 
 @dataclass
 class GPStatistics:
