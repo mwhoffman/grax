@@ -2,7 +2,7 @@
 
 import jax.numpy as jnp
 
-from grax import typing
+from grax import types
 from grax.means import base
 from grax.utils import checks
 
@@ -28,8 +28,8 @@ class Zero(base.Mean):
     """Return the input dimension."""
     return self._dim
 
-  def __call__(self, x: typing.ArrayLike) -> typing.Array:
+  def __call__(self, x: types.ArrayLike) -> types.Array:
     """Evaluate the mean on the given inputs."""
     x = jnp.asarray(x)
-    checks.check_type_and_shape(x, typing.Float, (None, self.dim))
+    checks.check_type_and_shape(x, types.Float, (None, self.dim))
     return jnp.zeros(x.shape[0])

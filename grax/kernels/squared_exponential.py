@@ -2,7 +2,7 @@
 
 import jax.numpy as jnp
 
-from grax import typing
+from grax import types
 from grax.kernels import base
 from grax.utils import checks
 
@@ -12,8 +12,8 @@ class SquaredExponential(base.Kernel):
 
   def __init__(
     self,
-    rho: typing.ArrayLike,
-    ell: typing.ArrayLike,
+    rho: types.ArrayLike,
+    ell: types.ArrayLike,
     dim: int | None = None,
   ):
     """Initialize a squared-exponential kernel.
@@ -30,8 +30,8 @@ class SquaredExponential(base.Kernel):
     rho = jnp.asarray(rho)
     ell = jnp.asarray(ell)
 
-    checks.check_type_and_rank(rho, typing.Float, 0)
-    checks.check_type_and_rank(ell, typing.Float, {0, 1})
+    checks.check_type_and_rank(rho, types.Float, 0)
+    checks.check_type_and_rank(ell, types.Float, {0, 1})
 
     if dim is not None:
       if ell.ndim == 1:
@@ -53,14 +53,14 @@ class SquaredExponential(base.Kernel):
 
   def __call__(
     self,
-    x1: typing.ArrayLike,
-    x2: typing.ArrayLike | None = None,
+    x1: types.ArrayLike,
+    x2: types.ArrayLike | None = None,
     *,
     diag: bool = False,
-  ) -> typing.Array:
+  ) -> types.Array:
     """Evaluate the kernel on the given inputs."""
     x1 = jnp.asarray(x1)
-    checks.check_type_and_shape(x1, typing.Float, (None, self.dim))
+    checks.check_type_and_shape(x1, types.Float, (None, self.dim))
 
     if diag:
       if x2 is not None:
@@ -74,7 +74,7 @@ class SquaredExponential(base.Kernel):
 
     if x2 is not None:
       x2 = jnp.asarray(x2)
-      checks.check_type_and_shape(x1, typing.Float, (None, self.dim))
+      checks.check_type_and_shape(x1, types.Float, (None, self.dim))
       x2 = x2 / self.ell
       z2 = jnp.sum(x2**2, axis=1, keepdims=True)
 

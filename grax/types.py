@@ -3,6 +3,7 @@
 import jax
 import jax.typing
 
+
 Array = jax.Array
 ArrayLike = jax.typing.ArrayLike
 DTypeLike = jax.typing.DTypeLike

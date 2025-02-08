@@ -4,14 +4,14 @@ from abc import abstractmethod
 
 from flax import nnx
 
-from grax import typing
+from grax import types
 
 
 class Likelihood(nnx.Module):
   """Definition of the interface for marginal log-likelihoods."""
 
   @abstractmethod
-  def __call__(self, y: typing.ArrayLike, f: typing.ArrayLike) -> typing.Array:
+  def __call__(self, y: types.ArrayLike, f: types.ArrayLike) -> types.Array:
     """Evaluate the marginal log-likelihood.
 
     Args:

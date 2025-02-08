@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 from flax import nnx
 
-from grax import typing
+from grax import types
 
 
 class Kernel(nnx.Module):
@@ -13,11 +13,11 @@ class Kernel(nnx.Module):
   @abstractmethod
   def __call__(
     self,
-    x1: typing.ArrayLike,
-    x2: typing.ArrayLike | None = None,
+    x1: types.ArrayLike,
+    x2: types.ArrayLike | None = None,
     *,
     diag: bool = False,
-  ) -> typing.Array:
+  ) -> types.Array:
     """Evaluate the kernel on given inputs.
 
     Args:

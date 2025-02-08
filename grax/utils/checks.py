@@ -5,8 +5,8 @@ from collections.abc import Sequence
 import jax.dtypes
 import jax.numpy as jnp
 
-from grax.typing import ArrayLike
-from grax.typing import DTypeLike
+from grax.types import ArrayLike
+from grax.types import DTypeLike
 
 
 class CheckError(ValueError):

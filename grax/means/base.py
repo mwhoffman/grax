@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 from flax import nnx
 
-from grax import typing
+from grax import types
 
 
 class Mean(nnx.Module):
@@ -13,8 +13,8 @@ class Mean(nnx.Module):
   @abstractmethod
   def __call__(
     self,
-    x: typing.ArrayLike,
-  ) -> typing.Array:
+    x: types.ArrayLike,
+  ) -> types.Array:
     """Evaluate the mean on the given inputs.
 
     Args:

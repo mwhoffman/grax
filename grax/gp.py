@@ -4,30 +4,29 @@ from dataclasses import dataclass
 
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
-
 from flax import nnx
 
 from grax import kernels
 from grax import likelihoods
 from grax import means
-from grax import typing
+from grax import types
 from grax.utils import checks
 
 
 @dataclass
 class GPData:
   """Input/output data."""
-  X: typing.Array
-  Y: typing.Array
+  X: types.Array
+  Y: types.Array
 
 
 @dataclass
 class GPStatistics:
   """Sufficient statistics for making GP posterior predictions."""
-  L: typing.Array
-  r: typing.Array
-  a: typing.Array
-  w: typing.Array
+  L: types.Array
+  r: types.Array
+  a: types.Array
+  w: types.Array
 
 
 class GP(nnx.Module):
@@ -38,7 +37,7 @@ class GP(nnx.Module):
     kernel: kernels.Kernel,
     likelihood: likelihoods.Gaussian,
     mean: means.Mean | None = None,
-    data: tuple[typing.ArrayLike, typing.ArrayLike] | None = None,
+    data: tuple[types.ArrayLike, types.ArrayLike] | None = None,
   ):
     """Initialize the GP with constituent models.
 
@@ -70,7 +69,7 @@ class GP(nnx.Module):
     if data is not None:
       self.add_data(*data)
 
-  def add_data(self, X: typing.ArrayLike, Y: typing.ArrayLike):
+  def add_data(self, X: types.ArrayLike, Y: types.ArrayLike):
     """Add observed data.
 
     This will update the model's sufficient statistics so that posterior
@@ -83,8 +82,8 @@ class GP(nnx.Module):
     X = jnp.asarray(X)
     Y = jnp.asarray(Y)
 
-    checks.check_type_and_shape(X, typing.Float, (None, self.kernel.dim))
-    checks.check_type_and_shape(Y, typing.Float, (X.shape[0], ))
+    checks.check_type_and_shape(X, types.Float, (None, self.kernel.dim))
+    checks.check_type_and_shape(Y, types.Float, (X.shape[0], ))
 
     if self.data is None:
       # TODO: do I really want to copy here?
@@ -119,7 +118,7 @@ class GP(nnx.Module):
 
     return GPStatistics(L, r, a, w)
 
-  def predict(self, X: typing.ArrayLike) -> tuple[typing.Array, typing.Array]:
+  def predict(self, X: types.ArrayLike) -> tuple[types.Array, types.Array]:
     """Make predictions of the latent function at the given input points.
 
     Args:
@@ -133,7 +132,7 @@ class GP(nnx.Module):
     """
     X = jnp.asarray(X)
 
-    checks.check_type_and_shape(X, typing.Float, (None, self.kernel.dim))
+    checks.check_type_and_shape(X, types.Float, (None, self.kernel.dim))
 
     # Compute the prior mean and variance.
     mu = self.mean(X)
@@ -161,7 +160,7 @@ class GP(nnx.Module):
 
     return mu, s2
 
-  def log_likelihood(self) -> typing.Array:
+  def log_likelihood(self) -> types.Array:
     """Return the log-likelihood of the observed data."""
     if self.data is None:
       return jnp.array(0.0)
