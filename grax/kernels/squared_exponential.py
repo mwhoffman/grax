@@ -1,6 +1,7 @@
 """Implementation of a simple, squared-exponential kernel."""
 
 import jax.numpy as jnp
+from flax import nnx
 
 from grax import types
 from grax.kernels import base
@@ -42,14 +43,14 @@ class SquaredExponential(base.Kernel):
     elif ell.ndim == 0:
       raise checks.CheckError("dim must be specified if ell is a scalar.")
 
-    self.rho = rho
-    self.ell = ell
+    self.logrho = nnx.Param(jnp.log(rho))
+    self.logell = nnx.Param(jnp.log(ell))
     self._dim = dim
 
   @property
   def dim(self) -> int:
     """The dimension of the kernel inputs."""
-    return self.ell.shape[0] if self._dim is None else self._dim
+    return self.logell.shape[0] if self._dim is None else self._dim
 
   def __call__(
     self,
@@ -62,20 +63,23 @@ class SquaredExponential(base.Kernel):
     x1 = jnp.asarray(x1)
     checks.check_type_and_shape(x1, types.Float, (None, self.dim))
 
+    # TODO: deal with numerical issues when the log parameters -> -inf.
+    ell = jnp.exp(self.logell.value)
+    rho = jnp.exp(self.logrho.value)
+
     if diag:
       if x2 is not None:
         msg = "the diagonal kernel is invalid for two input arrays."
         raise checks.CheckError(msg)
+      return jnp.full(x1.shape[0], rho)
 
-      return jnp.full(x1.shape[0], self.rho)
-
-    x1 = x1 / self.ell
+    x1 = x1 / ell
     z1 = jnp.sum(x1**2, axis=1, keepdims=True)
 
     if x2 is not None:
       x2 = jnp.asarray(x2)
       checks.check_type_and_shape(x1, types.Float, (None, self.dim))
-      x2 = x2 / self.ell
+      x2 = x2 / ell
       z2 = jnp.sum(x2**2, axis=1, keepdims=True)
 
     else:
@@ -83,5 +87,5 @@ class SquaredExponential(base.Kernel):
       z2 = z1
 
     D = jnp.clip(z1 - 2 * jnp.matmul(x1, x2.T) + z2.T, 0)
-    K = self.rho * jnp.exp(-D / 2)
+    K = rho * jnp.exp(-D / 2)
     return K
