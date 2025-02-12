@@ -27,11 +27,11 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Run type checks
-        run: uv run mypy grax tests examples
+        run: uv run mypy
 
       - name: Run tests
         run: |
-          uv run pytest tests
+          uv run pytest
           uv run coverage xml
 
       - name: Run coveralls
