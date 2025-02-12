@@ -24,15 +24,13 @@ jobs:
           python-version-file: "pyproject.toml"
 
       - name: Install requirements
-        run: |
-          uv sync --all-extras --dev
-          uv pip install coveralls
+        run: uv sync --all-extras --dev
 
       - name: Run type checks
-        run: uv run mypy grax tests examples
+        run: mypy grax tests examples
 
       - name: Run tests
-        run: uv run pytest tests
+        run: pytest tests
 
       - name: Run coveralls
         uses: coverallsapp/github-action@v2
