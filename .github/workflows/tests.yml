@@ -24,7 +24,9 @@ jobs:
           python-version-file: "pyproject.toml"
 
       - name: Install requirements
-        run: uv sync --all-extras --dev
+        run: |
+          uv sync --all-extras --dev
+          uv pip install coveralls
 
       - name: Run type checks
         run: uv run mypy grax tests examples
