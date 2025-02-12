@@ -12,23 +12,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up python
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version-file: "pyproject.toml"
 
       - name: Install requirements
-        run: |
-          pip install -r requirements-dev.txt
-          pip install coveralls
-          pip install -e .
+        run: uv sync --all-extras --dev
 
-      - name: Check types
-        run: mypy ./grax ./tests ./examples
+      - name: Run type checks
+        run: uv run mypy grax tests examples
 
       - name: Run tests
-        run: pytest ./tests
+        run: uv run pytest tests
 
       - name: Run coveralls
         uses: coverallsapp/github-action@v2

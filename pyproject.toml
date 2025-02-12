@@ -12,9 +12,10 @@ dependencies = [
   "flax"
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
   "coverage[toml]",
+  "ipython",
   "matplotlib",
   "mypy",
   "pytest",
