@@ -27,10 +27,13 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Run type checks
-        run: mypy grax tests examples
+        run: uv run mypy grax tests examples
 
       - name: Run tests
-        run: pytest tests
+        run: uv run pytest tests
 
       - name: Run coveralls
         uses: coverallsapp/github-action@v2
+        with:
+          file: .coverage
+          format: python
