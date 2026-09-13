@@ -1,2 +1,3 @@
 # grax
-GP library written in python/jax
+
+GP regression using python and jax.
