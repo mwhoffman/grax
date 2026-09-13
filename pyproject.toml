@@ -9,14 +9,41 @@ requires-python = ">=3.10"
 
 dependencies = [
   "jax",
+  "jaxtyping",
 ]
 
 [dependency-groups]
 dev = [
   "ipython",
   "ruff",
+  "ty",
 ]
 
 [build-system]
 requires = ["uv_build>=0.11,<0.12"]
 build-backend = "uv_build"
+
+[tool.ruff]
+indent-width = 2
+line-length = 80
+cache-dir = "~/.cache/ruff"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "PLC0105",  # Don't require suffixing typevar with their variance.
+  "CPY001",   # Don't require copyright notices.
+  "F722",     # Ignore syntax errors in forward annotations which falsely flags
+              # type strings in jaxtyping (see
+              # https://docs.kidger.site/jaxtyping/faq/).
+]
+
+[tool.ruff.lint.flake8-annotations]
+suppress-none-returning = true
+
+[tool.ruff.lint.isort]
+force-single-line = true
+lines-after-imports = 2
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
