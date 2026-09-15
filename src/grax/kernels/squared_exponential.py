@@ -89,6 +89,8 @@ class SEKernel(kernels_base.Kernel[SEParams]):
       on k(x1[i], x2[j]).
     """
     checks.check_shape(params.logell, (self.dim,))
+    checks.check_shape(x1, (None, self.dim))
+    checks.check_shape(x2, (None, self.dim))
 
     rho = jnp.exp(params.logrho)
     ell = jnp.exp(params.logell)
@@ -118,6 +120,7 @@ class SEKernel(kernels_base.Kernel[SEParams]):
       i.e. k[i] is the kernel function evaluated on k(x[i], x[i]).
     """
     checks.check_shape(params.logell, (self.dim,))
+    checks.check_shape(x, (None, self.dim))
 
     rho = jnp.exp(params.logrho)
     return jnp.full(x.shape[0], rho)

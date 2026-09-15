@@ -65,6 +65,23 @@ def test_diag_rejects_params_with_wrong_dim(kernel: SEKernel):
     kernel.diag(bad_params, x)
 
 
+def test_call_rejects_x1_and_x2_with_wrong_dim(kernel: SEKernel):
+  # x1 and x2 agree with each other (satisfying jaxtyping's own "n d"/"m d"
+  # cross-consistency check), but not with the kernel's own dim.
+  params = kernel.init()
+  x1 = jnp.zeros((1, 2))
+  x2 = jnp.zeros((4, 2))
+  with pytest.raises(CheckError, match=r"expected \(None, 3\)"):
+    kernel(params, x1, x2)
+
+
+def test_diag_rejects_x_with_wrong_dim(kernel: SEKernel):
+  params = kernel.init()
+  x = jnp.zeros((1, 1))
+  with pytest.raises(CheckError, match=r"expected \(None, 3\)"):
+    kernel.diag(params, x)
+
+
 def test_call_at_zero_distance_equals_rho(kernel: SEKernel):
   params = kernel.init()
   x = jnp.zeros((1, 3))
