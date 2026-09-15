@@ -48,6 +48,7 @@ ignore = [
   "D102", "D103",  # ...
   "PLR2004",       # Allow comparing against magic values.
   "INP001",        # tests/ is a flat directory, not a package.
+  "SLF001",        # Allow private access in tests.
 ]
 
 [tool.ruff.lint.flake8-annotations]
