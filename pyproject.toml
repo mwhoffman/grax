@@ -26,8 +26,12 @@ examples = [
 ]
 
 [build-system]
-requires = ["uv_build>=0.11,<0.12"]
+requires = ["uv_build>=0.12,<0.13"]
 build-backend = "uv_build"
+
+[tool.uv]
+# Should match the version requirements of uv_build above.
+required-version = ">=0.12,<0.13"
 
 [tool.ruff]
 indent-width = 2
