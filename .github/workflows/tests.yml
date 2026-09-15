@@ -24,16 +24,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --locked --all-extras --dev --group examples
+        run: uv sync --locked
 
       - name: Run linter
-        run: uv run ruff check
+        run: uv run ruff check src tests
 
       - name: Run type checks
-        run: uv run ty check
+        run: uv run ty check src tests
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest tests
 
   examples:
     runs-on: ubuntu-latest
@@ -48,11 +48,19 @@ jobs:
           cache-dependency-glob: "uv.lock"
           python-version: "3.14"
 
+      - name: Install dependencies
+        run: uv sync --locked --group=examples
+
+      - name: Run linter
+        run: uv run ruff check examples
+
+      - name: Run type checks
+        run: uv run ty check examples
+
       - name: Run examples
         env:
           MPLBACKEND: Agg
         run: |
-          uv sync --locked --only-group examples
           for f in examples/*.py; do
             echo "::group::$f"
             uv run python "$f"
