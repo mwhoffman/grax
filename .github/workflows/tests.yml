@@ -34,3 +34,27 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.14"
+
+      - name: Run examples
+        env:
+          MPLBACKEND: Agg
+        run: |
+          uv sync --locked --only-group examples
+          for f in examples/*.py; do
+            echo "::group::$f"
+            uv run python "$f"
+            echo "::endgroup::"
+          done
