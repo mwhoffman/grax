@@ -6,11 +6,18 @@ from typing import TypeVar
 import jaxtyping as jt
 
 
-Params = TypeVar("Params", contravariant=True)
+Params = TypeVar("Params")
 
 
 class Kernel(Protocol[Params]):
   """Definition of the kernel interface."""
+
+  def init(self) -> Params:
+    """Construct parameters for the kernel."""
+
+  @property
+  def shape(self) -> tuple[int, ...]:
+    """The shape of inputs expected by this kernel."""
 
   def __call__(
     self,
