@@ -1,6 +1,7 @@
 """Mean function base class."""
 
-from typing import Protocol
+import abc
+from typing import Generic
 from typing import TypeVar
 
 import jaxtyping as jt
@@ -9,16 +10,19 @@ import jaxtyping as jt
 Params = TypeVar("Params")
 
 
-class Mean(Protocol[Params]):
+class Mean(abc.ABC, Generic[Params]):
   """Definition of the mean function interface."""
 
+  @abc.abstractmethod
   def init(self) -> Params:
     """Construct parameters for the mean function."""
 
   @property
+  @abc.abstractmethod
   def shape(self) -> tuple[int, ...]:
     """The shape of inputs expected by this mean function."""
 
+  @abc.abstractmethod
   def __call__(
     self,
     params: Params,

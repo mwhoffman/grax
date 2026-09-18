@@ -1,6 +1,7 @@
 """Kernel base class."""
 
-from typing import Protocol
+import abc
+from typing import Generic
 from typing import TypeVar
 
 import jaxtyping as jt
@@ -9,16 +10,19 @@ import jaxtyping as jt
 Params = TypeVar("Params")
 
 
-class Kernel(Protocol[Params]):
+class Kernel(abc.ABC, Generic[Params]):
   """Definition of the kernel interface."""
 
+  @abc.abstractmethod
   def init(self) -> Params:
     """Construct parameters for the kernel."""
 
   @property
+  @abc.abstractmethod
   def shape(self) -> tuple[int, ...]:
     """The shape of inputs expected by this kernel."""
 
+  @abc.abstractmethod
   def __call__(
     self,
     params: Params,
@@ -38,6 +42,7 @@ class Kernel(Protocol[Params]):
       k(x1[i], x2[j]).
     """
 
+  @abc.abstractmethod
   def diag(
     self,
     params: Params,
