@@ -1,16 +1,21 @@
 # Run the linter and type checker.
+[group("testing")]
 check:
-    uv run ruff check src tests
-    uv run ty check src tests
+  uv run ruff check src tests examples
+  uv run ty check src tests examples
 
 # Run the test suite.
-test:
-    uv run pytest --cov
+[group("testing")]
+[arg("html", long, value="true", help="Generate HTML coverage.")]
+test html="":
+  uv run pytest --cov --cov-report=term {{ if html == "true" { "--cov-report=html" } else { "" } }}
 
-# Sync dependencies, including the examples group.
+# Sync dependencies.
+[group("dependencies")]
 sync:
-    uv sync --group examples
+  uv sync --group=examples
 
-# Upgrade dependencies, including the examples group.
+# Upgrade dependencies.
+[group("dependencies")]
 upgrade:
-    uv sync --upgrade --group examples
+  uv sync --upgrade --group=examples
