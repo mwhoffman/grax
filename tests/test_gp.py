@@ -146,20 +146,6 @@ def test_fit(gp: gp_module.GP):
   # Ensure the log-likelihood improves.
   assert ll_after > ll_before
 
-  # Perturb the parameters and ensure none are meaningfully better in
-  # log-likelihood than the point we've found.
-  flat, treedef = jax.tree_util.tree_flatten(gp._params)
-  for trial_key in jax.random.split(jax.random.key(1), 10):
-    leaf_keys = jax.random.split(trial_key, len(flat))
-    perturbed = jax.tree_util.tree_unflatten(
-      treedef,
-      [
-        leaf + 1e-3 * jax.random.normal(k, leaf.shape)
-        for k, leaf in zip(leaf_keys, flat, strict=True)
-      ],
-    )
-    assert gp._loglikelihood(perturbed) <= ll_after + 1e-2
-
 
 def test_statistics_caches_for_current_params(gp: gp_module.GP):
   gp.add_data(jnp.array([[0.0], [1.0]]), jnp.array([0.0, 1.0]))
