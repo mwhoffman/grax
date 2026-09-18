@@ -31,7 +31,17 @@ def test_init_builds_params_from_kernel_and_mean_init(gp: gp_module.GP):
   assert jnp.allclose(gp._params.kernel.logrho, jnp.log(1.0))
   assert jnp.allclose(gp._params.kernel.logell, jnp.log(jnp.array([1.0])))
   assert gp._params.mean is None
-  assert jnp.allclose(gp._params.logsn2, jnp.log(0.01))
+  assert jnp.allclose(gp._params.logsn2, jnp.log(0.01 - gp._sn2_min))
+
+
+@pytest.mark.parametrize(
+  ("sn2", "sn2_min"), [(1e-6, 1e-6), (1e-7, 1e-6), (1.0, -1.0)]
+)
+def test_init_rejects_invalid_sn2_and_sn2_min(sn2: float, sn2_min: float):
+  kernel = kernels.SEKernel(dim=1)
+  mean = means.ZeroMean(dim=1)
+  with pytest.raises(checks.CheckError, match="sn2_min"):
+    gp_module.GP(kernel, mean, sn2=sn2, sn2_min=sn2_min)
 
 
 def test_predict_with_no_data_returns_prior(gp: gp_module.GP):
@@ -87,7 +97,7 @@ def _reference_loglikelihood(
   params: gp_module.GPParams,
 ) -> jax.Array:
   """Independent multivariate-normal log-likelihood for cross-checking."""
-  sn2 = jnp.exp(params.logsn2)
+  sn2 = jnp.exp(params.logsn2) + gp._sn2_min
   k = gp._kernel(params.kernel, x, x) + sn2 * jnp.eye(x.shape[0])
   r = y - gp._mean(params.mean, x)
   _, logdet = jnp.linalg.slogdet(k)
@@ -122,6 +132,19 @@ def test_loglikelihood_grad_matches_reference(gp: gp_module.GP):
   assert jnp.allclose(grad.logsn2, grad_ref.logsn2, atol=1e-3)
   assert jnp.allclose(grad.kernel.logrho, grad_ref.kernel.logrho, atol=1e-3)
   assert jnp.allclose(grad.kernel.logell, grad_ref.kernel.logell, atol=1e-3)
+
+
+def test_sn2_min_floors_the_effective_noise(gp: gp_module.GP):
+  x = jnp.array([[0.0], [1.0], [2.0], [3.5]])
+  y = jnp.array([0.1, 0.9, 0.3, -0.5])
+  gp.add_data(x, y)
+
+  # However small logsn2 gets, the effective noise stays at `sn2_min`.
+  params = dataclasses.replace(gp._params, logsn2=jnp.array(-50.0))
+  ll = gp._loglikelihood(params)
+  ll_ref = _reference_loglikelihood(gp, x, y, params)
+  assert jnp.isfinite(ll)
+  assert jnp.allclose(ll, ll_ref, atol=1e-3)
 
 
 def test_fit_with_no_data_is_a_noop(gp: gp_module.GP):
@@ -194,8 +217,10 @@ def test_predict_matches_between_batched_and_single_add_data():
   kernel = kernels.SEKernel(dim=1, ell=jnp.array([1.0]))
   mean = means.ZeroMean(dim=1)
 
-  gp_all = gp_module.GP(kernel, mean, sn2=0.1)
-  gp_batched = gp_module.GP(kernel, mean, sn2=0.1)
+  # A large `sn2_min` makes the floor matter, so this also checks that the
+  # full and block-update paths apply it identically.
+  gp_all = gp_module.GP(kernel, mean, sn2=0.1, sn2_min=0.05)
+  gp_batched = gp_module.GP(kernel, mean, sn2=0.1, sn2_min=0.05)
 
   x = jnp.linspace(0.0, 5.0, 9)[:, None]
   y = jnp.sin(x[:, 0])

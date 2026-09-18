@@ -8,10 +8,10 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 import jaxtyping as jt
-import optax
 
 from grax import base
 from grax import checks
+from grax import optimization
 from grax.kernels import base as kernels_base
 from grax.means import base as means_base
 
@@ -29,7 +29,8 @@ class GPParams(Generic[KernelParams, MeanParams]):
   Attributes:
     kernel: the parameters of the GP's kernel.
     mean: the parameters of the GP's mean function.
-    logsn2: the log of the observation noise variance.
+    logsn2: the log of the observation noise variance in excess of the GP's
+      `sn2_min` floor.
   """
 
   kernel: KernelParams
@@ -83,16 +84,22 @@ class GP(Generic[KernelParams, MeanParams]):
     kernel: kernels_base.Kernel[KernelParams],
     mean: means_base.Mean[MeanParams],
     sn2: float = 1.0,
+    sn2_min: float = 1e-6,
   ) -> None:
     """Initialize the GP with constituent models.
 
     Args:
       kernel: the kernel modeling the covariance between inputs.
       mean: the mean function modeling the prior expected output.
-      sn2: the initial observation noise variance.
+      sn2: the initial observation noise variance; must exceed `sn2_min`.
+      sn2_min: a floor added to the observation noise variance, which acts as
+        regularization and keeps the noisy kernel matrix well conditioned.
     """
     if kernel.shape != mean.shape:
       msg = f"kernel.shape {kernel.shape} != mean.shape {mean.shape}."
+      raise checks.CheckError(msg)
+    if sn2_min < 0 or sn2 <= sn2_min:
+      msg = f"Require 0 <= sn2_min < sn2, got {sn2_min=} and {sn2=}."
       raise checks.CheckError(msg)
 
     self.__data: GPData | None = None
@@ -101,18 +108,19 @@ class GP(Generic[KernelParams, MeanParams]):
     self.__params: GP.Params = GPParams(
       kernel=kernel.init(),
       mean=mean.init(),
-      logsn2=jnp.log(jnp.asarray(sn2)),
+      logsn2=jnp.log(jnp.asarray(sn2 - sn2_min)),
     )
 
     self._kernel = kernel
     self._mean = mean
+    self._sn2_min = sn2_min
 
     @base.typed
     def compute_stats(
       params: GP.Params,
       data: GPData,
     ) -> GPStatistics:
-      sn2_ = jnp.exp(params.logsn2)
+      sn2_ = jnp.exp(params.logsn2) + sn2_min
       k = kernel(params.kernel, data.x, data.x)
       k = k + sn2_ * jnp.eye(data.x.shape[0])
       r = data.y - mean(params.mean, data.x)
@@ -134,7 +142,7 @@ class GP(Generic[KernelParams, MeanParams]):
       # together from scratch. This is the same block partitioning LAPACK's
       # own blocked Cholesky routines use internally, so it's no less
       # numerically stable than a full recompute of the combined data.
-      sn2_ = jnp.exp(params.logsn2)
+      sn2_ = jnp.exp(params.logsn2) + sn2_min
       n_pending = pending.x.shape[0]
 
       k_np = kernel(params.kernel, data.x, pending.x)
@@ -334,58 +342,16 @@ class GP(Generic[KernelParams, MeanParams]):
   def fit(self, max_iter: int = 100, tol: float = 1e-3) -> None:
     """Fit the GP's parameters by maximizing the log-likelihood.
 
-    Uses L-BFGS, roughly following the `run_opt` pattern from:
-    https://optax.readthedocs.io/en/latest/_collections/examples/lbfgs.html.
+    Uses L-BFGS; see `grax.optimization.minimize` for how it stops.
 
     Args:
       max_iter: the maximum number of L-BFGS iterations to run.
       tol: stop early once the gradient norm falls below this tolerance.
     """
-    # This optimizes over a flattened list of `self._params`'s rather `GPParams`
-    # directly. This is due to the fact that L-BFGS uses the parameter structure
-    # with an extra per-leaf "history" dimension for its internal state and as a
-    # result any runtime shape checks will fail.
-    flat_params, treedef = jax.tree_util.tree_flatten(self._params)
-
-    def objective(flat_params: list[jax.Array]) -> jt.Float[jt.Array, ""]:
-      params = jax.tree_util.tree_unflatten(treedef, flat_params)
-      return -self._loglikelihood(params)
-
-    optimizer = optax.lbfgs()
-    value_and_grad_fun = optax.value_and_grad_from_state(objective)
-
-    def step(
-      carry: tuple[list[jax.Array], optax.OptState],
-    ) -> tuple[list[jax.Array], optax.OptState]:
-      flat_params, state = carry
-      value, grad = value_and_grad_fun(flat_params, state=state)
-      updates, state = optimizer.update(
-        grad,
-        state,
-        flat_params,
-        value=value,
-        grad=grad,
-        value_fn=objective,
-      )
-      flat_params = optax.apply_updates(flat_params, updates)
-      # optax's stubs return the same broad Union type regardless of the
-      # concrete input type, so this doesn't statically narrow back to
-      # `list[Array]` even though it is one at runtime.
-      return flat_params, state  # ty: ignore[invalid-return-type]
-
-    def continuing_criterion(
-      carry: tuple[list[jax.Array], optax.OptState],
-    ) -> jt.Bool[jt.Array, ""]:
-      _, state = carry
-      iter_num = optax.tree.get(state, "count")
-      grad = optax.tree.get(state, "grad")
-      err = optax.tree.norm(grad)
-      return (iter_num == 0) | ((iter_num < max_iter) & (err >= tol))
-
-    init_carry = (flat_params, optimizer.init(flat_params))
-    final_flat_params, _ = jax.lax.while_loop(
-      continuing_criterion,
-      step,
-      init_carry,
+    result = optimization.minimize(
+      lambda params: -self._loglikelihood(params),
+      self._params,
+      max_iter=max_iter,
+      tol=tol,
     )
-    self._params = jax.tree_util.tree_unflatten(treedef, final_flat_params)
+    self._params = result.params

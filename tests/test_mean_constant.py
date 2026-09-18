@@ -10,7 +10,7 @@ from grax.means import constant
 
 @pytest.fixture
 def mean() -> constant.ConstantMean:
-  return constant.ConstantMean(dim=3, offset=2.5)
+  return constant.ConstantMean(input_shape=(3,), offset=2.5)
 
 
 def test_shape(mean: constant.ConstantMean):
@@ -22,7 +22,9 @@ def test_init_uses_offset(mean: constant.ConstantMean):
 
 
 def test_init_defaults_to_zero_offset():
-  assert jnp.allclose(constant.ConstantMean(dim=3).init().offset, 0.0)
+  assert jnp.allclose(
+    constant.ConstantMean(input_shape=(3,)).init().offset, 0.0
+  )
 
 
 def test_call_returns_offset(mean: constant.ConstantMean):
@@ -41,3 +43,9 @@ def test_call_rejects_wrong_dim(mean: constant.ConstantMean):
   params = mean.init()
   with pytest.raises(checks.CheckError, match=r"expected \(None, 3\)"):
     mean(params, jnp.zeros((5, 2)))
+
+
+def test_call_supports_multi_dimensional_inputs():
+  mean = constant.ConstantMean(input_shape=(2, 3), offset=1.5)
+  x = jnp.zeros((4, 2, 3))
+  assert jnp.allclose(mean(mean.init(), x), jnp.full(4, 1.5))

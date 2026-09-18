@@ -34,17 +34,17 @@ class ConstantMean(means_base.Mean[ConstantParams]):
   value lives in the params held by the GP.
 
   Attributes:
-    dim: the dimensionality of the mean function's inputs.
+    input_shape: the shape of a single input (excluding batch dims).
     offset: the initial constant offset; defaults to 0 if unset.
   """
 
-  dim: int
+  input_shape: tuple[int, ...]
   offset: jt.Float[jt.ArrayLike, ""] | None = None
 
   @property
   def shape(self) -> tuple[int, ...]:
     """The expected shape of a single input (excluding batch dims)."""
-    return (self.dim,)
+    return self.input_shape
 
   @base.typed
   def init(self) -> ConstantParams:
@@ -62,7 +62,7 @@ class ConstantMean(means_base.Mean[ConstantParams]):
   def __call__(
     self,
     params: ConstantParams,
-    x: jt.Float[jt.Array, "n d"],
+    x: jt.Float[jt.Array, "n ..."],
   ) -> jt.Float[jt.Array, " n"]:
     """Evaluate the mean function on given inputs.
 
@@ -73,5 +73,5 @@ class ConstantMean(means_base.Mean[ConstantParams]):
     Returns:
       An n-vector with `params.offset` repeated for each input point.
     """
-    checks.check_shape(x, (None, self.dim))
+    checks.check_shape(x, (None, *self.input_shape))
     return jnp.full(x.shape[0], params.offset)
