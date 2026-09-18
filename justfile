@@ -3,10 +3,10 @@ check:
   uv run ruff check src tests examples
   uv run ty check src tests examples
 
-# Run the formatter.
-[arg("check", long, value="true", help="Check formatting.")]
-format check="":
-  uv run ruff format {{ if check == "true" { "--check" } else { "" } }}
+# Run the lint fixer and formatter.
+fix:
+  uv run ruff check src tests examples --fix
+  uv run ruff format
 
 # Run the test suite.
 [arg("html", long, value="true", help="Generate HTML coverage.")]
