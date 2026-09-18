@@ -6,13 +6,13 @@ import jax.random as jrd
 import matplotlib.pyplot as plt
 
 from grax import gp
-from grax.kernels import squared_exponential as se
-from grax.means import zero
+from grax import kernels
+from grax import means
 
 
 def f(x: jax.Array) -> jax.Array:
   """The latent function we're modeling."""
-  return x * jnp.sin(x)
+  return 12 + x * jnp.sin(x)
 
 
 def main() -> None:
@@ -24,8 +24,8 @@ def main() -> None:
   y = f(x) + jrd.normal(noise_key, (100,))
   x = x[:, None]
 
-  kernel = se.SEKernel(dim=1, init_rho=3.0, init_ell=jnp.array([0.8]))
-  mean = zero.ZeroMean(dim=1)
+  kernel = kernels.SEKernel(dim=1, init_rho=3.0, init_ell=jnp.array([0.8]))
+  mean = means.ConstantMean(dim=1)
   model = gp.GP(kernel, mean, sn2=1.0)
   model.add_data(x, y)
   model.fit()

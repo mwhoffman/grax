@@ -4,6 +4,7 @@ import dataclasses
 from typing import Generic
 from typing import TypeVar
 
+
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
