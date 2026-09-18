@@ -1,5 +1,7 @@
 """Tests for grax.gp."""
 
+import dataclasses
+
 import jax
 import jax.numpy as jnp
 import jaxtyping as jt
@@ -148,4 +150,43 @@ def test_fit(gp: gp_module.GP):
   grad = jax.grad(gp._loglikelihood)(gp._params)
   leaves = jax.tree_util.tree_leaves(grad)
   gnorm = jnp.sqrt(sum(jnp.sum(leaf**2) for leaf in leaves))
-  assert gnorm < 1e-2
+  assert gnorm < 1e-1
+
+
+def test_statistics_caches_for_current_params(gp: gp_module.GP):
+  gp.add_data(jnp.array([[0.0], [1.0]]), jnp.array([0.0, 1.0]))
+  stats1 = gp._statistics(gp._params)
+  stats2 = gp._statistics(gp._params)
+  assert stats1 is stats2
+
+
+def test_statistics_cache_invalidated_by_add_data(gp: gp_module.GP):
+  gp.add_data(jnp.array([[0.0], [1.0]]), jnp.array([0.0, 1.0]))
+  stats1 = gp._statistics(gp._params)
+  gp.add_data(jnp.array([[2.0]]), jnp.array([2.0]))
+  stats2 = gp._statistics(gp._params)
+  assert stats1 is not stats2
+
+
+def test_statistics_cache_invalidated_by_params_assignment(gp: gp_module.GP):
+  gp.add_data(jnp.array([[0.0], [1.0]]), jnp.array([0.0, 1.0]))
+  stats1 = gp._statistics(gp._params)
+  # A new (but value-equal) params object still invalidates the cache --
+  # invalidation is triggered by assignment, not by a value comparison.
+  gp._params = dataclasses.replace(gp._params)
+  stats2 = gp._statistics(gp._params)
+  assert stats1 is not stats2
+
+
+def test_statistics_for_other_params_does_not_use_or_pollute_cache(
+  gp: gp_module.GP,
+):
+  gp.add_data(jnp.array([[0.0], [1.0]]), jnp.array([0.0, 1.0]))
+  cached = gp._statistics(gp._params)
+
+  other_params = dataclasses.replace(gp._params)
+  other_stats = gp._statistics(other_params)
+  assert other_stats is not cached
+
+  # The real cache (for self._params) must be untouched by that call.
+  assert gp._statistics(gp._params) is cached

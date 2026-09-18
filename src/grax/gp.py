@@ -38,6 +38,7 @@ class GPParams(Generic[KernelParams, MeanParams]):
 
 
 @base.typed
+@jax.tree_util.register_dataclass
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class GPData:
   """Observed input/output data.
@@ -90,13 +91,64 @@ class GP(Generic[KernelParams, MeanParams]):
 
     self._kernel = kernel
     self._mean = mean
+    self._data: GPData | None = None
+    self._stats: GPStatistics | None = None
     self._params = GPParams(
       kernel=kernel.init(),
       mean=mean.init(),
       logsn2=jnp.log(jnp.asarray(sn2)),
     )
 
-    self._data: GPData | None = None
+    @base.typed
+    def compute_stats(
+      params: GPParams[KernelParams, MeanParams],
+      data: GPData,
+    ) -> GPStatistics:
+      sn2_ = jnp.exp(params.logsn2)
+      k = kernel(params.kernel, data.x, data.x)
+      k = k + sn2_ * jnp.eye(data.x.shape[0])
+      r = data.y - mean(params.mean, data.x)
+
+      chol = jla.cholesky(k, lower=True)
+      a = jla.cho_solve((chol, True), r)
+
+      return GPStatistics(L=chol, r=r, a=a)
+
+    @base.typed
+    def predict(
+      params: GPParams[KernelParams, MeanParams],
+      data: GPData,
+      stats: GPStatistics,
+      x: jt.Float[jt.Array, "m ..."],
+    ) -> tuple[jt.Float[jt.Array, " m"], jt.Float[jt.Array, " m"]]:
+      mu = mean(params.mean, x)
+      s2 = kernel.diag(params.kernel, x)
+
+      k = kernel(params.kernel, data.x, x)
+      v = jla.solve_triangular(stats.L, k, lower=True)
+
+      mu = mu + k.T @ stats.a
+      s2 = s2 - jnp.sum(v**2, axis=0)
+
+      return mu, s2
+
+    # jax.jit is the outermost decorator (wrapping the already-@base.typed
+    # functions above) so that repeated calls with matching shapes skip
+    # straight to the compiled executable -- including skipping the
+    # jaxtyping/beartype checks, which then only run once per shape, at
+    # trace time.
+    self._compute_stats = jax.jit(compute_stats)
+    self._predict = jax.jit(predict)
+
+  @property
+  def _params(self) -> GPParams[KernelParams, MeanParams]:
+    """The GP's current parameters."""
+    return self.__params
+
+  @_params.setter
+  def _params(self, params: GPParams[KernelParams, MeanParams]) -> None:
+    self.__params = params
+    self._stats = None
 
   @base.typed
   def add_data(
@@ -121,6 +173,7 @@ class GP(Generic[KernelParams, MeanParams]):
         x=jnp.concatenate([self._data.x, x]),
         y=jnp.concatenate([self._data.y, y]),
       )
+    self._stats = None
 
   @base.typed
   def _statistics(
@@ -129,21 +182,27 @@ class GP(Generic[KernelParams, MeanParams]):
   ) -> GPStatistics | None:
     """Compute the sufficient statistics needed for posterior prediction.
 
+    Cached when `params` is the GP's current parameters (`self._params`);
+    that cache is invalidated automatically whenever `self._params` is
+    reassigned or `add_data` is called. For any other `params` -- e.g. a
+    candidate value during `fit`'s search -- this always recomputes fresh
+    and never reads or writes the cache.
+
     Args:
       params: the parameters of the GP to compute statistics for.
     """
     if self._data is None:
       return None
 
-    sn2 = jnp.exp(params.logsn2)
-    k = self._kernel(params.kernel, self._data.x, self._data.x)
-    k = k + sn2 * jnp.eye(self._data.x.shape[0])
-    r = self._data.y - self._mean(params.mean, self._data.x)
+    is_current = params is self._params
+    if is_current and self._stats is not None:
+      return self._stats
 
-    chol = jla.cholesky(k, lower=True)
-    a = jla.cho_solve((chol, True), r)
+    stats = self._compute_stats(params, self._data)
 
-    return GPStatistics(L=chol, r=r, a=a)
+    if is_current:
+      self._stats = stats
+    return stats
 
   @base.typed
   def predict(
@@ -163,18 +222,13 @@ class GP(Generic[KernelParams, MeanParams]):
     x = jnp.asarray(x)
     checks.check_shape(x, (None, *self._kernel.shape))
 
-    mu = self._mean(self._params.mean, x)
-    s2 = self._kernel.diag(self._params.kernel, x)
-
     stats = self._statistics(self._params)
     if stats is None or self._data is None:
+      mu = self._mean(self._params.mean, x)
+      s2 = self._kernel.diag(self._params.kernel, x)
       return mu, s2
 
-    k = self._kernel(self._params.kernel, self._data.x, x)
-    v = jla.solve_triangular(stats.L, k, lower=True)
-
-    mu = mu + k.T @ stats.a
-    s2 = s2 - jnp.sum(v**2, axis=0)
+    mu, s2 = self._predict(self._params, self._data, stats, x)
 
     return mu, s2
 
