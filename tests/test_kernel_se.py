@@ -13,8 +13,8 @@ from grax.kernels import squared_exponential as se
 def kernel() -> se.SEKernel:
   return se.SEKernel(
     dim=3,
-    init_rho=2.0,
-    init_ell=jnp.array([0.5, 1.0, 2.0]),
+    rho=2.0,
+    ell=jnp.array([0.5, 1.0, 2.0]),
   )
 
 
@@ -28,7 +28,7 @@ def test_init(kernel: se.SEKernel):
   assert jnp.allclose(params.logell, jnp.log(jnp.array([0.5, 1.0, 2.0])))
 
 
-def test_default_init_rho_and_ell():
+def test_default_rho_and_ell():
   kernel = se.SEKernel(dim=3)
   params = kernel.init()
   assert jnp.allclose(params.logrho, jnp.log(1.0))
@@ -37,17 +37,17 @@ def test_default_init_rho_and_ell():
 
 def test_construction_rejects_wrong_ell_length():
   with pytest.raises(checks.CheckError, match=r"expected \(3,\)"):
-    se.SEKernel(dim=3, init_ell=jnp.array([0.5, 1.0]))
+    se.SEKernel(dim=3, ell=jnp.array([0.5, 1.0]))
 
 
 def test_construction_rejects_non_scalar_rho():
   with pytest.raises(jt.TypeCheckError):
-    se.SEKernel(dim=3, init_rho=jnp.array([1.0, 2.0]))
+    se.SEKernel(dim=3, rho=jnp.array([1.0, 2.0]))
 
 
 def test_construction_rejects_rank_two_ell():
   with pytest.raises(jt.TypeCheckError):
-    se.SEKernel(dim=3, init_ell=jnp.zeros((3, 1)))
+    se.SEKernel(dim=3, ell=jnp.zeros((3, 1)))
 
 
 def test_call_rejects_params_with_wrong_dim(kernel: se.SEKernel):
@@ -95,7 +95,7 @@ def test_call_at_zero_distance_equals_rho(kernel: se.SEKernel):
 
 
 def test_call_matches_closed_form_in_1d():
-  kernel = se.SEKernel(dim=1, init_ell=jnp.array([1.0]))
+  kernel = se.SEKernel(dim=1, ell=jnp.array([1.0]))
   params = kernel.init()
 
   x1 = jnp.array([[0.0], [1.0]])

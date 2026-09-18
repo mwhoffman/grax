@@ -31,20 +31,24 @@ class SEParams:
 class SEKernel(kernels_base.Kernel[SEParams]):
   """The squared-exponential kernel.
 
+  `rho` and `ell` are the initial values of the kernel's hyperparameters, used
+  by `init` to construct its params. They are not updated by fitting: the
+  fitted values live in the params held by the GP (e.g. `logrho`/`logell`).
+
   Attributes:
     dim: the dimensionality of the kernel's inputs.
-    init_rho: the output variance used by `init`; defaults to 1 if unset.
-    init_ell: the lengthscale(s) used by `init`; if not given, defaults to
-      a vector of ones of length `dim`.
+    rho: the initial output variance; defaults to 1 if unset.
+    ell: the initial lengthscale(s); if not given, defaults to a vector of
+      ones of length `dim`.
   """
 
   dim: int
-  init_rho: jt.Float[jt.ArrayLike, ""] | None = None
-  init_ell: jt.Float[jt.ArrayLike, " d"] | None = None
+  rho: jt.Float[jt.ArrayLike, ""] | None = None
+  ell: jt.Float[jt.ArrayLike, " d"] | None = None
 
   def __post_init__(self) -> None:
-    """Check that, if given, init_ell has the right shape."""
-    checks.check_none_or_shape(self.init_ell, (self.dim,))
+    """Check that, if given, ell has the right shape."""
+    checks.check_none_or_shape(self.ell, (self.dim,))
 
   @property
   def shape(self) -> tuple[int, ...]:
@@ -53,17 +57,16 @@ class SEKernel(kernels_base.Kernel[SEParams]):
 
   @base.typed
   def init(self) -> SEParams:
-    """Construct parameters for the kernel from init_rho and init_ell.
+    """Construct parameters for the kernel from rho and ell.
 
     Falls back to a default output variance of 1 and a default lengthscale
-    of 1 per dimension for whichever of `init_rho`/`init_ell` is unset.
+    of 1 per dimension for whichever of `rho`/`ell` is unset.
 
     Returns:
-      The parameters of the kernel, taken directly from `init_rho` and
-      `init_ell`.
+      The parameters of the kernel, taken directly from `rho` and `ell`.
     """
-    rho = self.init_rho if self.init_rho is not None else 1.0
-    ell = self.init_ell if self.init_ell is not None else jnp.ones(self.dim)
+    rho = self.rho if self.rho is not None else 1.0
+    ell = self.ell if self.ell is not None else jnp.ones(self.dim)
     return SEParams(
       logrho=jnp.log(jnp.asarray(rho)),
       logell=jnp.log(jnp.asarray(ell)),

@@ -29,13 +29,17 @@ class ConstantParams:
 class ConstantMean(means_base.Mean[ConstantParams]):
   """The constant mean function.
 
+  `offset` is the initial value of the mean function's parameter, used by
+  `init` to construct its params. It is not updated by fitting: the fitted
+  value lives in the params held by the GP.
+
   Attributes:
     dim: the dimensionality of the mean function's inputs.
-    init_offset: the offset used by `init`; defaults to 0.
+    offset: the initial constant offset; defaults to 0 if unset.
   """
 
   dim: int
-  init_offset: jt.Float[jt.ArrayLike, ""] = 0.0
+  offset: jt.Float[jt.ArrayLike, ""] | None = None
 
   @property
   def shape(self) -> tuple[int, ...]:
@@ -44,12 +48,15 @@ class ConstantMean(means_base.Mean[ConstantParams]):
 
   @base.typed
   def init(self) -> ConstantParams:
-    """Construct parameters for the mean function from init_offset.
+    """Construct parameters for the mean function from offset.
+
+    Falls back to a default offset of 0 if `offset` is unset.
 
     Returns:
       The parameters of the mean function.
     """
-    return ConstantParams(offset=jnp.asarray(self.init_offset, dtype=float))
+    offset = self.offset if self.offset is not None else 0.0
+    return ConstantParams(offset=jnp.asarray(offset, dtype=float))
 
   @base.typed
   def __call__(

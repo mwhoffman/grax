@@ -15,13 +15,13 @@ from grax import means
 
 @pytest.fixture
 def gp() -> gp_module.GP:
-  kernel = kernels.SEKernel(dim=1, init_ell=jnp.array([1.0]))
+  kernel = kernels.SEKernel(dim=1, ell=jnp.array([1.0]))
   mean = means.ZeroMean(dim=1)
   return gp_module.GP(kernel, mean, sn2=0.01)
 
 
 def test_init_rejects_mismatched_kernel_and_mean_shape():
-  kernel = kernels.SEKernel(dim=2, init_ell=jnp.ones(2))
+  kernel = kernels.SEKernel(dim=2, ell=jnp.ones(2))
   mean = means.ZeroMean(dim=3)
   with pytest.raises(checks.CheckError, match=r"kernel\.shape"):
     gp_module.GP(kernel, mean)
@@ -191,7 +191,7 @@ def test_predict_matches_between_batched_and_single_add_data():
   # and one given it in two batches with a `predict` call in between (so the
   # second batch is folded in via the block Cholesky update rather than a
   # full recompute). Both should produce the same posterior.
-  kernel = kernels.SEKernel(dim=1, init_ell=jnp.array([1.0]))
+  kernel = kernels.SEKernel(dim=1, ell=jnp.array([1.0]))
   mean = means.ZeroMean(dim=1)
 
   gp_all = gp_module.GP(kernel, mean, sn2=0.1)

@@ -10,14 +10,14 @@ from grax.means import constant
 
 @pytest.fixture
 def mean() -> constant.ConstantMean:
-  return constant.ConstantMean(dim=3, init_offset=2.5)
+  return constant.ConstantMean(dim=3, offset=2.5)
 
 
 def test_shape(mean: constant.ConstantMean):
   assert mean.shape == (3,)
 
 
-def test_init_uses_init_offset(mean: constant.ConstantMean):
+def test_init_uses_offset(mean: constant.ConstantMean):
   assert jnp.allclose(mean.init().offset, 2.5)
 
 
