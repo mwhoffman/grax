@@ -44,6 +44,7 @@ select = ["ALL"]
 ignore = [
   "PLC0105",  # Don't require suffixing typevar with their variance.
   "CPY001",   # Don't require copyright notices.
+  "COM812",   # Don't require trailing commas.
   "F722",     # Ignore syntax errors in forward annotations which falsely flags
               # type strings in jaxtyping (see
               # https://docs.kidger.site/jaxtyping/faq/).

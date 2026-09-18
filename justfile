@@ -1,11 +1,14 @@
 # Run the linter and type checker.
-[group("testing")]
 check:
   uv run ruff check src tests examples
   uv run ty check src tests examples
 
+# Run the formatter.
+[arg("check", long, value="true", help="Check formatting.")]
+format check="":
+  uv run ruff format {{ if check == "true" { "--check" } else { "" } }}
+
 # Run the test suite.
-[group("testing")]
 [arg("html", long, value="true", help="Generate HTML coverage.")]
 test html="":
   uv run pytest --cov --cov-report=term {{ if html == "true" { "--cov-report=html" } else { "" } }}
