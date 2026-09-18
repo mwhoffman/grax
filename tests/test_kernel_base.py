@@ -41,6 +41,11 @@ def test_constant_rejects_non_scalar_rho():
     base.ConstantKernel(input_shape=(3,), rho=jnp.array([1.0, 2.0]))
 
 
+def test_constant_rejects_int_rho():
+  with pytest.raises(jt.TypeCheckError):
+    base.ConstantKernel(input_shape=(3,), rho=2)
+
+
 @pytest.mark.parametrize("rho", [0.0, -1.0, float("nan")])
 def test_constant_rejects_non_positive_rho(rho: float):
   with pytest.raises(ValueError, match="rho must be positive"):

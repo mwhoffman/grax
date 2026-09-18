@@ -29,6 +29,27 @@ def test_default_ell():
   assert jnp.allclose(params.logell, jnp.log(jnp.ones(3)))
 
 
+def test_init_accepts_a_scalar_ell_when_dim_is_one():
+  params = se.SEKernel(dim=1, ell=0.8).init()
+  assert jnp.allclose(params.logell, jnp.log(jnp.array([0.8])))
+
+
+@pytest.mark.parametrize("ell", [[0.5, 1.0], (0.5, 1.0)])
+def test_init_accepts_a_sequence_ell(ell: list[float] | tuple[float, ...]):
+  params = se.SEKernel(dim=2, ell=ell).init()
+  assert jnp.allclose(params.logell, jnp.log(jnp.array([0.5, 1.0])))
+
+
+def test_construction_rejects_a_scalar_ell_when_dim_is_above_one():
+  with pytest.raises(checks.CheckError, match=r"shape \(\), expected \(3,\)"):
+    se.SEKernel(dim=3, ell=0.8)
+
+
+def test_construction_rejects_int_ell():
+  with pytest.raises(jt.TypeCheckError):
+    se.SEKernel(dim=1, ell=1)
+
+
 def test_construction_rejects_wrong_ell_length():
   with pytest.raises(checks.CheckError, match=r"expected \(3,\)"):
     se.SEKernel(dim=3, ell=jnp.array([0.5, 1.0]))

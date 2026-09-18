@@ -2,6 +2,7 @@
 
 import jax
 import jax.numpy as jnp
+import jaxtyping as jt
 import pytest
 
 from grax import checks
@@ -49,3 +50,8 @@ def test_call_supports_multi_dimensional_inputs():
   mean = constant.ConstantMean(input_shape=(2, 3), offset=1.5)
   x = jnp.zeros((4, 2, 3))
   assert jnp.allclose(mean(mean.init(), x), jnp.full(4, 1.5))
+
+
+def test_offset_rejects_int():
+  with pytest.raises(jt.TypeCheckError):
+    constant.ConstantMean(input_shape=(3,), offset=2)

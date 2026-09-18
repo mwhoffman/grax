@@ -142,7 +142,7 @@ class ConstantKernel(Kernel[ConstantParams]):
   """
 
   input_shape: tuple[int, ...]
-  rho: jt.Float[jt.ArrayLike, ""] | None = None
+  rho: base.ScalarLike | None = None
 
   def __post_init__(self) -> None:
     """Check that, if given, rho is positive."""
@@ -165,7 +165,7 @@ class ConstantKernel(Kernel[ConstantParams]):
       The parameters of the kernel, taken directly from `rho`.
     """
     rho = self.rho if self.rho is not None else 1.0
-    return ConstantParams(logrho=jnp.log(jnp.asarray(rho)))
+    return ConstantParams(logrho=jnp.log(jnp.asarray(rho, dtype=float)))
 
   @base.typed
   def __call__(

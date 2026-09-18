@@ -38,16 +38,18 @@ class SEKernel(kernels_base.Kernel[SEParams]):
 
   Attributes:
     dim: the dimensionality of the kernel's inputs.
-    ell: the initial lengthscale(s); if not given, defaults to a vector of
-      ones of length `dim`.
+    ell: the initial lengthscales, a vector of length `dim` (or a scalar if
+      `dim == 1`); if not given, defaults to a vector of ones.
   """
 
   dim: int
-  ell: jt.Float[jt.ArrayLike, " d"] | None = None
+  ell: base.VectorLike | None = None
 
   def __post_init__(self) -> None:
     """Check that, if given, ell has the right shape."""
-    checks.check_none_or_shape(self.ell, (self.dim,))
+    # Promoting lets a scalar stand for a length-1 vector, so it is only valid
+    # when dim == 1.
+    checks.check_none_or_shape(self.ell, (self.dim,), promote=True)
 
   @property
   def shape(self) -> tuple[int, ...]:
@@ -63,8 +65,11 @@ class SEKernel(kernels_base.Kernel[SEParams]):
     Returns:
       The parameters of the kernel, taken directly from `ell`.
     """
-    ell = self.ell if self.ell is not None else jnp.ones(self.dim)
-    return SEParams(logell=jnp.log(jnp.asarray(ell)))
+    if self.ell is None:
+      ell = jnp.ones(self.dim)
+    else:
+      ell = jnp.array(self.ell, dtype=float, ndmin=1)
+    return SEParams(logell=jnp.log(ell))
 
   @base.typed
   def __call__(

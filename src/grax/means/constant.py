@@ -39,7 +39,7 @@ class ConstantMean(means_base.Mean[ConstantParams]):
   """
 
   input_shape: tuple[int, ...]
-  offset: jt.Float[jt.ArrayLike, ""] | None = None
+  offset: base.ScalarLike | None = None
 
   @property
   def shape(self) -> tuple[int, ...]:
