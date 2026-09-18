@@ -74,16 +74,78 @@ def test_predict_rejects_wrong_input_dim(gp: gp_module.GP):
     gp.predict(jnp.zeros((3, 2)))
 
 
-def test_grad_flows_through_predict(gp: gp_module.GP):
-  gp.add_data(jnp.array([[0.0], [1.0]]), jnp.array([0.0, 1.0]))
-  x = jnp.array([[0.5]])
+def test_loglikelihood_with_no_data_is_zero(gp: gp_module.GP):
+  assert jnp.allclose(gp._loglikelihood(gp._params), 0.0)
 
-  def loss(params: gp_module.GPParams) -> jax.Array:
-    gp._params = params
-    mu, _ = gp.predict(x)
-    return jnp.sum(mu**2)
 
-  grad = jax.grad(loss)(gp._params)
-  assert jnp.isfinite(grad.kernel.logrho)
-  assert jnp.all(jnp.isfinite(grad.kernel.logell))
-  assert jnp.isfinite(grad.logsn2)
+def _reference_loglikelihood(
+  gp: gp_module.GP,
+  x: jax.Array,
+  y: jax.Array,
+  params: gp_module.GPParams,
+) -> jax.Array:
+  """Independent multivariate-normal log-likelihood for cross-checking."""
+  sn2 = jnp.exp(params.logsn2)
+  k = gp._kernel(params.kernel, x, x) + sn2 * jnp.eye(x.shape[0])
+  r = y - gp._mean(params.mean, x)
+  _, logdet = jnp.linalg.slogdet(k)
+  n = x.shape[0]
+  return (
+    -0.5 * r @ jnp.linalg.solve(k, r)
+    - 0.5 * logdet
+    - 0.5 * n * jnp.log(2 * jnp.pi)
+  )
+
+
+def test_loglikelihood_matches_reference_value(gp: gp_module.GP):
+  x = jnp.array([[0.0], [1.0], [2.0], [3.5]])
+  y = jnp.array([0.1, 0.9, 0.3, -0.5])
+  gp.add_data(x, y)
+
+  ll = gp._loglikelihood(gp._params)
+  ll_ref = _reference_loglikelihood(gp, x, y, gp._params)
+  assert jnp.allclose(ll, ll_ref, atol=1e-4)
+
+
+def test_loglikelihood_grad_matches_reference(gp: gp_module.GP):
+  x = jnp.array([[0.0], [1.0], [2.0], [3.5]])
+  y = jnp.array([0.1, 0.9, 0.3, -0.5])
+  gp.add_data(x, y)
+
+  grad = jax.grad(gp._loglikelihood)(gp._params)
+  grad_ref = jax.grad(lambda p: _reference_loglikelihood(gp, x, y, p))(
+    gp._params,
+  )
+
+  assert jnp.allclose(grad.logsn2, grad_ref.logsn2, atol=1e-3)
+  assert jnp.allclose(grad.kernel.logrho, grad_ref.kernel.logrho, atol=1e-3)
+  assert jnp.allclose(grad.kernel.logell, grad_ref.kernel.logell, atol=1e-3)
+
+
+def test_fit_with_no_data_is_a_noop(gp: gp_module.GP):
+  params_before = gp._params
+  gp.fit(max_iter=10)
+  assert jnp.allclose(gp._params.logsn2, params_before.logsn2)
+  assert jnp.allclose(gp._params.kernel.logrho, params_before.kernel.logrho)
+
+
+def test_fit(gp: gp_module.GP):
+  # Noisy (rather than exact/noise-free) data, so sn2 doesn't get pushed
+  # toward a slow-to-converge, near-degenerate optimum close to zero.
+  key = jax.random.key(0)
+  x = jnp.linspace(0.0, 10.0, 20)[:, None]
+  y = jnp.sin(x[:, 0]) + 0.1 * jax.random.normal(key, (20,))
+  gp.add_data(x, y)
+
+  ll_before = gp._loglikelihood(gp._params)
+  gp.fit(max_iter=200, tol=1e-4)
+  ll_after = gp._loglikelihood(gp._params)
+
+  # Ensure the log-likelihood improves.
+  assert ll_after > ll_before
+
+  # Make sure the grad norm is small.
+  grad = jax.grad(gp._loglikelihood)(gp._params)
+  leaves = jax.tree_util.tree_leaves(grad)
+  gnorm = jnp.sqrt(sum(jnp.sum(leaf**2) for leaf in leaves))
+  assert gnorm < 1e-2

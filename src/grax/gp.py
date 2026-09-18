@@ -8,6 +8,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as jla
 import jaxtyping as jt
+import optax
 
 from grax import base
 from grax import checks
@@ -51,6 +52,7 @@ class GPData:
 
 
 @base.typed
+@jax.tree_util.register_dataclass
 @dataclasses.dataclass(frozen=True, kw_only=True)
 class GPStatistics:
   """Sufficient statistics for making GP posterior predictions.
@@ -121,15 +123,22 @@ class GP(Generic[KernelParams, MeanParams]):
       )
 
   @base.typed
-  def _get_stats(self) -> GPStatistics | None:
-    """Compute the sufficient statistics needed for posterior prediction."""
+  def _statistics(
+    self,
+    params: GPParams[KernelParams, MeanParams],
+  ) -> GPStatistics | None:
+    """Compute the sufficient statistics needed for posterior prediction.
+
+    Args:
+      params: the parameters of the GP to compute statistics for.
+    """
     if self._data is None:
       return None
 
-    sn2 = jnp.exp(self._params.logsn2)
-    k = self._kernel(self._params.kernel, self._data.x, self._data.x)
+    sn2 = jnp.exp(params.logsn2)
+    k = self._kernel(params.kernel, self._data.x, self._data.x)
     k = k + sn2 * jnp.eye(self._data.x.shape[0])
-    r = self._data.y - self._mean(self._params.mean, self._data.x)
+    r = self._data.y - self._mean(params.mean, self._data.x)
 
     chol = jla.cholesky(k, lower=True)
     a = jla.cho_solve((chol, True), r)
@@ -157,7 +166,7 @@ class GP(Generic[KernelParams, MeanParams]):
     mu = self._mean(self._params.mean, x)
     s2 = self._kernel.diag(self._params.kernel, x)
 
-    stats = self._get_stats()
+    stats = self._statistics(self._params)
     if stats is None or self._data is None:
       return mu, s2
 
@@ -168,3 +177,86 @@ class GP(Generic[KernelParams, MeanParams]):
     s2 = s2 - jnp.sum(v**2, axis=0)
 
     return mu, s2
+
+  @base.typed
+  def _loglikelihood(
+    self,
+    params: GPParams[KernelParams, MeanParams],
+  ) -> jt.Float[jt.Array, ""]:
+    """Compute the log-likelihood of the observed data.
+
+    Args:
+      params: the parameters of the GP to evaluate the log-likelihood at.
+
+    Returns:
+      The log-likelihood of the observed data, or 0 if there is none.
+    """
+    stats = self._statistics(params)
+    if stats is None or self._data is None:
+      return jnp.array(0.0)
+
+    n = self._data.x.shape[0]
+    misfit = jnp.inner(stats.a, stats.r)
+    logdet = jnp.sum(jnp.log(jnp.diagonal(stats.L)))
+
+    return -0.5 * misfit - 0.5 * n * jnp.log(2 * jnp.pi) - logdet
+
+  @base.typed
+  def fit(self, max_iter: int = 100, tol: float = 1e-3) -> None:
+    """Fit the GP's parameters by maximizing the log-likelihood.
+
+    Uses L-BFGS, roughly following the `run_opt` pattern from:
+    https://optax.readthedocs.io/en/latest/_collections/examples/lbfgs.html.
+
+    Args:
+      max_iter: the maximum number of L-BFGS iterations to run.
+      tol: stop early once the gradient norm falls below this tolerance.
+    """
+    # This optimizes over a flattened list of `self._params`'s rather `GPParams`
+    # directly. This is due to the fact that L-BFGS uses the parameter structure
+    # with an extra per-leaf "history" dimension for its internal state and as a
+    # result any runtime shape checks will fail.
+    flat_params, treedef = jax.tree_util.tree_flatten(self._params)
+
+    def objective(flat_params: list[jax.Array]) -> jt.Float[jt.Array, ""]:
+      params = jax.tree_util.tree_unflatten(treedef, flat_params)
+      return -self._loglikelihood(params)
+
+    optimizer = optax.lbfgs()
+    value_and_grad_fun = optax.value_and_grad_from_state(objective)
+
+    def step(
+      carry: tuple[list[jax.Array], optax.OptState],
+    ) -> tuple[list[jax.Array], optax.OptState]:
+      flat_params, state = carry
+      value, grad = value_and_grad_fun(flat_params, state=state)
+      updates, state = optimizer.update(
+        grad,
+        state,
+        flat_params,
+        value=value,
+        grad=grad,
+        value_fn=objective,
+      )
+      flat_params = optax.apply_updates(flat_params, updates)
+      # optax's stubs return the same broad Union type regardless of the
+      # concrete input type, so this doesn't statically narrow back to
+      # `list[Array]` even though it is one at runtime.
+      return flat_params, state  # ty: ignore[invalid-return-type]
+
+    def continuing_criterion(
+      carry: tuple[list[jax.Array], optax.OptState],
+    ) -> jt.Bool[jt.Array, ""]:
+      _, state = carry
+      iter_num = optax.tree.get(state, "count")
+      grad = optax.tree.get(state, "grad")
+      err = optax.tree.norm(grad)
+      return (iter_num == 0) | ((iter_num < max_iter) & (err >= tol))
+
+    init_carry = (flat_params, optimizer.init(flat_params))
+    final_flat_params, _ = jax.lax.while_loop(
+      continuing_criterion,
+      step,
+      init_carry,
+    )
+    self._params = jax.tree_util.tree_unflatten(treedef, final_flat_params)

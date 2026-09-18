@@ -28,6 +28,7 @@ def main() -> None:
   mean = zero.ZeroMean(dim=1)
   model = gp.GP(kernel, mean, sn2=1.0)
   model.add_data(x, y)
+  model.fit()
 
   xstar = jnp.linspace(-2.0, 12.0, 1000)
   mu, s2 = model.predict(xstar[:, None])
