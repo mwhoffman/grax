@@ -28,7 +28,6 @@ def test_init_rejects_mismatched_kernel_and_mean_shape():
 
 
 def test_init_builds_params_from_kernel_and_mean_init(gp: gp_module.GP):
-  assert jnp.allclose(gp._params.kernel.logrho, jnp.log(1.0))
   assert jnp.allclose(gp._params.kernel.logell, jnp.log(jnp.array([1.0])))
   assert gp._params.mean is None
   assert jnp.allclose(gp._params.logsn2, jnp.log(0.01 - gp._sn2_min))
@@ -130,7 +129,6 @@ def test_loglikelihood_grad_matches_reference(gp: gp_module.GP):
   )
 
   assert jnp.allclose(grad.logsn2, grad_ref.logsn2, atol=1e-3)
-  assert jnp.allclose(grad.kernel.logrho, grad_ref.kernel.logrho, atol=1e-3)
   assert jnp.allclose(grad.kernel.logell, grad_ref.kernel.logell, atol=1e-3)
 
 
@@ -151,7 +149,7 @@ def test_fit_with_no_data_is_a_noop(gp: gp_module.GP):
   params_before = gp._params
   gp.fit(max_iter=10)
   assert jnp.allclose(gp._params.logsn2, params_before.logsn2)
-  assert jnp.allclose(gp._params.kernel.logrho, params_before.kernel.logrho)
+  assert jnp.allclose(gp._params.kernel.logell, params_before.kernel.logell)
 
 
 def test_fit(gp: gp_module.GP):

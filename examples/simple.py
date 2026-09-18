@@ -24,7 +24,7 @@ def main() -> None:
   y = f(x) + jrd.normal(noise_key, (100,))
   x = x[:, None]
 
-  kernel = kernels.SEKernel(dim=1, rho=3.0, ell=jnp.array([0.8]))
+  kernel = 3.0 * kernels.SEKernel(dim=1, ell=jnp.array([0.8]))
   mean = means.ConstantMean(input_shape=kernel.shape)
   model = gp.GP(kernel, mean, sn2=1.0)
   model.add_data(x, y)

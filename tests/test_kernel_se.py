@@ -11,11 +11,7 @@ from grax.kernels import squared_exponential as se
 
 @pytest.fixture
 def kernel() -> se.SEKernel:
-  return se.SEKernel(
-    dim=3,
-    rho=2.0,
-    ell=jnp.array([0.5, 1.0, 2.0]),
-  )
+  return se.SEKernel(dim=3, ell=jnp.array([0.5, 1.0, 2.0]))
 
 
 def test_shape(kernel: se.SEKernel):
@@ -24,14 +20,12 @@ def test_shape(kernel: se.SEKernel):
 
 def test_init(kernel: se.SEKernel):
   params = kernel.init()
-  assert jnp.allclose(params.logrho, jnp.log(2.0))
   assert jnp.allclose(params.logell, jnp.log(jnp.array([0.5, 1.0, 2.0])))
 
 
-def test_default_rho_and_ell():
+def test_default_ell():
   kernel = se.SEKernel(dim=3)
   params = kernel.init()
-  assert jnp.allclose(params.logrho, jnp.log(1.0))
   assert jnp.allclose(params.logell, jnp.log(jnp.ones(3)))
 
 
@@ -40,31 +34,20 @@ def test_construction_rejects_wrong_ell_length():
     se.SEKernel(dim=3, ell=jnp.array([0.5, 1.0]))
 
 
-def test_construction_rejects_non_scalar_rho():
-  with pytest.raises(jt.TypeCheckError):
-    se.SEKernel(dim=3, rho=jnp.array([1.0, 2.0]))
-
-
 def test_construction_rejects_rank_two_ell():
   with pytest.raises(jt.TypeCheckError):
     se.SEKernel(dim=3, ell=jnp.zeros((3, 1)))
 
 
 def test_call_rejects_params_with_wrong_dim(kernel: se.SEKernel):
-  bad_params = se.SEParams(
-    logrho=jnp.array(0.0),
-    logell=jnp.zeros(2),
-  )
+  bad_params = se.SEParams(logell=jnp.zeros(2))
   x = jnp.zeros((1, 3))
   with pytest.raises(checks.CheckError, match=r"expected \(3,\)"):
     kernel(bad_params, x, x)
 
 
 def test_diag_rejects_params_with_wrong_dim(kernel: se.SEKernel):
-  bad_params = se.SEParams(
-    logrho=jnp.array(0.0),
-    logell=jnp.zeros(2),
-  )
+  bad_params = se.SEParams(logell=jnp.zeros(2))
   x = jnp.zeros((1, 3))
   with pytest.raises(checks.CheckError, match=r"expected \(3,\)"):
     kernel.diag(bad_params, x)
@@ -87,11 +70,11 @@ def test_diag_rejects_x_with_wrong_dim(kernel: se.SEKernel):
     kernel.diag(params, x)
 
 
-def test_call_at_zero_distance_equals_rho(kernel: se.SEKernel):
+def test_call_at_zero_distance_equals_one(kernel: se.SEKernel):
   params = kernel.init()
   x = jnp.zeros((1, 3))
   k = kernel(params, x, x)
-  assert jnp.allclose(k, 2.0)
+  assert jnp.allclose(k, 1.0)
 
 
 def test_call_matches_closed_form_in_1d():
@@ -135,16 +118,16 @@ def test_diag_matches_call_diagonal(kernel: se.SEKernel):
   assert jnp.allclose(kernel.diag(params, x), jnp.diagonal(full))
 
 
-def test_diag_equals_rho(kernel: se.SEKernel):
+def test_diag_equals_one(kernel: se.SEKernel):
   params = kernel.init()
   x = jnp.zeros((5, 3))
-  assert jnp.allclose(kernel.diag(params, x), 2.0)
+  assert jnp.allclose(kernel.diag(params, x), 1.0)
 
 
 def test_params_is_a_valid_pytree(kernel: se.SEKernel):
   params = kernel.init()
   leaves = jax.tree_util.tree_leaves(params)
-  assert len(leaves) == 2
+  assert len(leaves) == 1
 
 
 def test_grad_flows_through_call(kernel: se.SEKernel):
@@ -155,5 +138,4 @@ def test_grad_flows_through_call(kernel: se.SEKernel):
     return jnp.sum(kernel(p, x, x))
 
   grad = jax.grad(loss)(params)
-  assert jnp.all(jnp.isfinite(grad.logrho))
   assert jnp.all(jnp.isfinite(grad.logell))

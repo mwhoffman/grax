@@ -18,11 +18,9 @@ class SEParams:
   """Parameters of the squared-exponential kernel, stored in log-space.
 
   Attributes:
-    logrho: the log of the output variance.
     logell: the log of the lengthscales, one per input dimension.
   """
 
-  logrho: jt.Float[jt.Array, ""]
   logell: jt.Float[jt.Array, " d"]
 
 
@@ -31,19 +29,20 @@ class SEParams:
 class SEKernel(kernels_base.Kernel[SEParams]):
   """The squared-exponential kernel.
 
-  `rho` and `ell` are the initial values of the kernel's hyperparameters, used
-  by `init` to construct its params. They are not updated by fitting: the
-  fitted values live in the params held by the GP (e.g. `logrho`/`logell`).
+  The kernel has unit output variance; multiply it by a `ConstantKernel` (or a
+  positive float) to scale it.
+
+  `ell` is the initial value of the kernel's hyperparameter, used by `init` to
+  construct its params. It is not updated by fitting: the fitted value lives in
+  the params held by the GP (i.e. `logell`).
 
   Attributes:
     dim: the dimensionality of the kernel's inputs.
-    rho: the initial output variance; defaults to 1 if unset.
     ell: the initial lengthscale(s); if not given, defaults to a vector of
       ones of length `dim`.
   """
 
   dim: int
-  rho: jt.Float[jt.ArrayLike, ""] | None = None
   ell: jt.Float[jt.ArrayLike, " d"] | None = None
 
   def __post_init__(self) -> None:
@@ -57,20 +56,15 @@ class SEKernel(kernels_base.Kernel[SEParams]):
 
   @base.typed
   def init(self) -> SEParams:
-    """Construct parameters for the kernel from rho and ell.
+    """Construct parameters for the kernel from ell.
 
-    Falls back to a default output variance of 1 and a default lengthscale
-    of 1 per dimension for whichever of `rho`/`ell` is unset.
+    Falls back to a default lengthscale of 1 per dimension if `ell` is unset.
 
     Returns:
-      The parameters of the kernel, taken directly from `rho` and `ell`.
+      The parameters of the kernel, taken directly from `ell`.
     """
-    rho = self.rho if self.rho is not None else 1.0
     ell = self.ell if self.ell is not None else jnp.ones(self.dim)
-    return SEParams(
-      logrho=jnp.log(jnp.asarray(rho)),
-      logell=jnp.log(jnp.asarray(ell)),
-    )
+    return SEParams(logell=jnp.log(jnp.asarray(ell)))
 
   @base.typed
   def __call__(
@@ -95,7 +89,6 @@ class SEKernel(kernels_base.Kernel[SEParams]):
     checks.check_shape(x1, (None, self.dim))
     checks.check_shape(x2, (None, self.dim))
 
-    rho = jnp.exp(params.logrho)
     ell = jnp.exp(params.logell)
 
     scaled1 = x1 / ell
@@ -104,7 +97,7 @@ class SEKernel(kernels_base.Kernel[SEParams]):
     sqdist2 = jnp.sum(scaled2**2, axis=-1)
     sqdist = sqdist1 - 2 * jnp.matmul(scaled1, scaled2.T) + sqdist2
 
-    return rho * jnp.exp(-jnp.clip(sqdist, min=0) / 2)
+    return jnp.exp(-jnp.clip(sqdist, min=0) / 2)
 
   @base.typed
   def diag(
@@ -125,5 +118,4 @@ class SEKernel(kernels_base.Kernel[SEParams]):
     checks.check_shape(params.logell, (self.dim,))
     checks.check_shape(x, (None, self.dim))
 
-    rho = jnp.exp(params.logrho)
-    return jnp.full(x.shape[0], rho)
+    return jnp.ones(x.shape[0])

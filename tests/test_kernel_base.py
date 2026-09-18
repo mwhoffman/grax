@@ -19,7 +19,7 @@ def constant() -> base.ConstantKernel:
 def product() -> base.ProductKernel:
   return base.ProductKernel(
     k1=base.ConstantKernel(input_shape=(3,), rho=2.0),
-    k2=kernels.SEKernel(dim=3, rho=3.0, ell=jnp.array([0.5, 1.0, 2.0])),
+    k2=kernels.SEKernel(dim=3, ell=jnp.array([0.5, 1.0, 2.0])),
   )
 
 
@@ -93,7 +93,6 @@ def test_product_shape(product: base.ProductKernel):
 def test_product_init_holds_sub_kernel_params(product: base.ProductKernel):
   params = product.init()
   assert jnp.allclose(params.k1.logrho, jnp.log(2.0))
-  assert jnp.allclose(params.k2.logrho, jnp.log(3.0))
   assert jnp.allclose(params.k2.logell, jnp.log(jnp.array([0.5, 1.0, 2.0])))
 
 
