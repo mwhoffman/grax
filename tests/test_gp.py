@@ -184,3 +184,50 @@ def test_statistics_for_other_params_does_not_use_or_pollute_cache(
 
   # The real cache (for self._params) must be untouched by that call.
   assert gp._statistics(gp._params) is cached
+
+
+def test_predict_matches_between_batched_and_single_add_data():
+  # Two GPs with identical hyperparameters, one given all the data at once
+  # and one given it in two batches with a `predict` call in between (so the
+  # second batch is folded in via the block Cholesky update rather than a
+  # full recompute). Both should produce the same posterior.
+  kernel = se.SEKernel(dim=1, init_ell=jnp.array([1.0]))
+  mean = zero.ZeroMean(dim=1)
+
+  gp_all = gp_module.GP(kernel, mean, sn2=0.1)
+  gp_batched = gp_module.GP(kernel, mean, sn2=0.1)
+
+  x = jnp.linspace(0.0, 5.0, 9)[:, None]
+  y = jnp.sin(x[:, 0])
+
+  gp_all.add_data(x, y)
+
+  gp_batched.add_data(x[:4], y[:4])
+  gp_batched.predict(jnp.zeros((1, 1)))  # Force the first batch to be cached.
+  gp_batched.add_data(x[4:], y[4:])
+
+  xstar = jnp.linspace(-1.0, 6.0, 15)[:, None]
+  mu_all, s2_all = gp_all.predict(xstar)
+  mu_batched, s2_batched = gp_batched.predict(xstar)
+
+  assert jnp.allclose(mu_all, mu_batched, atol=1e-4)
+  assert jnp.allclose(s2_all, s2_batched, atol=1e-4)
+
+
+def test_params_assignment_folds_pending_data(gp: gp_module.GP):
+  gp.add_data(jnp.array([[0.0]]), jnp.array([0.0]))
+  gp.predict(jnp.zeros((1, 1)))  # Fold the first batch into `_data`.
+
+  gp.add_data(jnp.array([[1.0]]), jnp.array([1.0]))
+  # With both a folded and a pending batch present, `_data` concatenates
+  # them fresh on every access, so two reads never return the same object.
+  assert gp._data is not gp._data
+
+  gp._params = dataclasses.replace(gp._params)
+
+  # Reassigning params must fold the pending batch into `_data` immediately,
+  # not lazily on the next `_statistics`/`predict` call: with nothing left
+  # pending, `_data` short-circuits to returning the same cached object.
+  assert gp._data is gp._data
+  assert gp._data is not None
+  assert gp._data.x.shape[0] == 2
