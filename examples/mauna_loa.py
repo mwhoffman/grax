@@ -116,7 +116,6 @@ def main() -> None:
   co2 = load_co2()
   t = co2["t"].to_jax()
   y = co2["co2"].to_jax()
-  t0 = t.min()
 
   # The following kernel follows that from scikit-learn which itself follows
   # that of Rasmussen and Williams.
@@ -135,11 +134,11 @@ def main() -> None:
   model = gp.GP(kernel, mean, sn2=0.1**2)
 
   # Add data and fit the model.
-  model.add_data((t - t0)[:, None], y)
+  model.add_data(t[:, None], y)
   model.fit(max_iter=500)
 
-  tstar = jnp.linspace(t0, 2030.0, 1000)
-  mu, s2 = model.predict((tstar - t0)[:, None])
+  tstar = jnp.linspace(t.min(), 2030.0, 1000)
+  mu, s2 = model.predict(tstar[:, None])
 
   plot_gp(tstar, mu, s2, data=(t, y))
   plt.show()

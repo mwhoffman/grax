@@ -99,7 +99,7 @@ class SEKernel(kernels_base.Kernel[SEParams]):
     checks.check_shape(x2, (None, self.dim), name="x2")
 
     ell = jnp.exp(params.logell)
-    sqdist = distance.sqdist(x1 / ell, x2 / ell)
+    sqdist = distance.sqdist(x1, x2, ell)
     return jnp.exp(-sqdist / 2)
 
   @base.typed

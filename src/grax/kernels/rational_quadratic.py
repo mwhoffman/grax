@@ -115,7 +115,7 @@ class RQKernel(kernels_base.Kernel[RQParams]):
 
     ell = jnp.exp(params.logell)
     alpha = jnp.exp(params.logalpha)
-    sqdist = distance.sqdist(x1 / ell, x2 / ell)
+    sqdist = distance.sqdist(x1, x2, ell)
 
     # This is (1 + sqdist / (2 alpha))^(-alpha), but written with log1p as
     # otherwise, in float32, it loses accuracy and eventually rounds to 1 for
