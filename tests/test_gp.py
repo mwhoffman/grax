@@ -168,6 +168,16 @@ def test_fit(gp: gp_module.GP):
   assert ll_after > ll_before
 
 
+def test_methods_type_check_their_params_argument(gp: gp_module.GP):
+  # Strings aren't valid jax arguments, so unlike ints or None they would only
+  # be caught here, by the annotation itself.
+  gp.add_data(jnp.zeros((2, 1)), jnp.zeros(2))
+  with pytest.raises(jt.TypeCheckError):
+    gp._statistics("not params")  # ty: ignore[invalid-argument-type]
+  with pytest.raises(jt.TypeCheckError):
+    gp._loglikelihood("not params")  # ty: ignore[invalid-argument-type]
+
+
 def test_statistics_caches_for_current_params(gp: gp_module.GP):
   gp.add_data(jnp.array([[0.0], [1.0]]), jnp.array([0.0, 1.0]))
   stats1 = gp._statistics(gp._params)

@@ -1,5 +1,7 @@
 """Common type definitions shared across grax."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 
 import beartype as bt

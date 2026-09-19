@@ -1,5 +1,7 @@
 """Implementation of the constant mean function."""
 
+from __future__ import annotations
+
 import dataclasses
 
 import jax

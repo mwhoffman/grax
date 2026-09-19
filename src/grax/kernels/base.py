@@ -1,5 +1,7 @@
 """Kernel base class and the basic kernels that combine other kernels."""
 
+from __future__ import annotations
+
 import abc
 import dataclasses
 from typing import Generic
@@ -70,15 +72,13 @@ class Kernel(abc.ABC, Generic[Params]):
 
   @overload
   def __mul__(
-    self, other: "Kernel[Params2]"
-  ) -> "ProductKernel[Params, Params2]": ...
+    self, other: Kernel[Params2]
+  ) -> ProductKernel[Params, Params2]: ...
 
   @overload
-  def __mul__(
-    self, other: float
-  ) -> "ProductKernel[Params, ConstantParams]": ...
+  def __mul__(self, other: float) -> ProductKernel[Params, ConstantParams]: ...
 
-  def __mul__(self, other: object) -> "ProductKernel":
+  def __mul__(self, other: object) -> ProductKernel:
     """Multiply this kernel by another kernel or a positive float.
 
     Args:
@@ -92,7 +92,7 @@ class Kernel(abc.ABC, Generic[Params]):
     """
     return ProductKernel(k1=self, k2=as_kernel(other, self.shape))
 
-  def __rmul__(self, other: float) -> "ProductKernel[ConstantParams, Params]":
+  def __rmul__(self, other: float) -> ProductKernel[ConstantParams, Params]:
     """Multiply a positive float by this kernel.
 
     Args:
@@ -105,14 +105,12 @@ class Kernel(abc.ABC, Generic[Params]):
     return ProductKernel(k1=as_kernel(other, self.shape), k2=self)
 
   @overload
-  def __add__(
-    self, other: "Kernel[Params2]"
-  ) -> "SumKernel[Params, Params2]": ...
+  def __add__(self, other: Kernel[Params2]) -> SumKernel[Params, Params2]: ...
 
   @overload
-  def __add__(self, other: float) -> "SumKernel[Params, ConstantParams]": ...
+  def __add__(self, other: float) -> SumKernel[Params, ConstantParams]: ...
 
-  def __add__(self, other: object) -> "SumKernel":
+  def __add__(self, other: object) -> SumKernel:
     """Add another kernel or a positive float to this kernel.
 
     Args:
@@ -126,7 +124,7 @@ class Kernel(abc.ABC, Generic[Params]):
     """
     return SumKernel(k1=self, k2=as_kernel(other, self.shape))
 
-  def __radd__(self, other: float) -> "SumKernel[ConstantParams, Params]":
+  def __radd__(self, other: float) -> SumKernel[ConstantParams, Params]:
     """Add this kernel to a positive float.
 
     Args:

@@ -1,5 +1,7 @@
 """Implementation of the squared-exponential kernel."""
 
+from __future__ import annotations
+
 import dataclasses
 
 import jax

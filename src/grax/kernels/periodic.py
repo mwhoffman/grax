@@ -1,5 +1,7 @@
 """Implementation of the periodic kernel."""
 
+from __future__ import annotations
+
 import dataclasses
 
 import jax

@@ -1,5 +1,7 @@
 """Mean function base class."""
 
+from __future__ import annotations
+
 import abc
 from typing import Generic
 from typing import TypeVar

@@ -1,0 +1,7 @@
+extend = "../pyproject.toml"
+
+# Paths are relative to this file, so point at the project's source.
+src = ["../src"]
+
+[lint.flake8-annotations]
+suppress-none-returning = true

@@ -48,6 +48,10 @@ ignore = [
   "F722",     # Ignore syntax errors in forward annotations which falsely flags
               # type strings in jaxtyping (see
               # https://docs.kidger.site/jaxtyping/faq/).
+  "TC001",    # Don't require moving imports only used in annotations into a
+  "TC002",    # TYPE_CHECKING block. With `from __future__ import annotations`,
+  "TC003",    # runtime type checking (see grax.base.typed) evaluates them, so
+              # they must be imported at runtime.
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -63,9 +67,6 @@ ignore = [
   "INP001",        # Treat examples/ as a flat directory, not a package.
 ]
 
-[tool.ruff.lint.flake8-annotations]
-suppress-none-returning = true
-
 [tool.ruff.lint.isort]
 force-single-line = true
 lines-after-imports = 2
@@ -75,3 +76,8 @@ convention = "google"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+# Measure the library only, not the tests.
+source = ["grax"]
+branch = true

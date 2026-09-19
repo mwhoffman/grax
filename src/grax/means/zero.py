@@ -1,5 +1,7 @@
 """Implementation of the zero-mean function."""
 
+from __future__ import annotations
+
 import dataclasses
 
 import jax.numpy as jnp

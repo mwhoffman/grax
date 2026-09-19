@@ -1,5 +1,7 @@
 """Implementation of a GP."""
 
+from __future__ import annotations
+
 import dataclasses
 from typing import Generic
 from typing import TypeVar
@@ -73,12 +75,6 @@ class GPStatistics:
 class GP(Generic[KernelParams, MeanParams]):
   """A Gaussian process combining a kernel, mean function, and noise level."""
 
-  # Instance params class for convenience so we don't have to repeat the
-  # typevars. Bare `Params` only resolves in the signature of a method
-  # defined directly in this class body. Everywhere else runs later, in a scope
-  # that can't see this namespace, so use `GP.Params` there instead.
-  Params = GPParams[KernelParams, MeanParams]
-
   def __init__(
     self,
     kernel: kernels_base.Kernel[KernelParams],
@@ -105,7 +101,7 @@ class GP(Generic[KernelParams, MeanParams]):
     self.__data: GPData | None = None
     self.__data_pending: GPData | None = None
     self.__stats: GPStatistics | None = None
-    self.__params: GP.Params = GPParams(
+    self.__params: GPParams[KernelParams, MeanParams] = GPParams(
       kernel=kernel.init(),
       mean=mean.init(),
       logsn2=jnp.log(jnp.asarray(sn2 - sn2_min)),
@@ -117,7 +113,7 @@ class GP(Generic[KernelParams, MeanParams]):
 
     @base.typed
     def compute_stats(
-      params: GP.Params,
+      params: GPParams[KernelParams, MeanParams],
       data: GPData,
     ) -> GPStatistics:
       sn2_ = jnp.exp(params.logsn2) + sn2_min
@@ -132,7 +128,7 @@ class GP(Generic[KernelParams, MeanParams]):
 
     @base.typed
     def update_stats(
-      params: GP.Params,
+      params: GPParams[KernelParams, MeanParams],
       data: GPData,
       pending: GPData,
       stats: GPStatistics,
@@ -171,7 +167,7 @@ class GP(Generic[KernelParams, MeanParams]):
 
     @base.typed
     def predict(
-      params: GP.Params,
+      params: GPParams[KernelParams, MeanParams],
       data: GPData,
       stats: GPStatistics,
       x: jt.Float[jt.Array, "m ..."],
@@ -193,12 +189,12 @@ class GP(Generic[KernelParams, MeanParams]):
     self._predict = jax.jit(predict)
 
   @property
-  def _params(self) -> Params:
+  def _params(self) -> GPParams[KernelParams, MeanParams]:
     """The GP's current parameters."""
     return self.__params
 
   @_params.setter
-  def _params(self, params: Params) -> None:
+  def _params(self, params: GPParams[KernelParams, MeanParams]) -> None:
     self.__params = params
     # Any pending data can no longer be incrementally folded into the cache
     # we're about to drop, so fold it into `__data` now -- there's no
@@ -247,7 +243,7 @@ class GP(Generic[KernelParams, MeanParams]):
   @base.typed
   def _statistics(
     self,
-    params: Params,
+    params: GPParams[KernelParams, MeanParams],
   ) -> GPStatistics | None:
     """Compute the sufficient statistics needed for posterior prediction.
 
@@ -318,7 +314,7 @@ class GP(Generic[KernelParams, MeanParams]):
   @base.typed
   def _loglikelihood(
     self,
-    params: Params,
+    params: GPParams[KernelParams, MeanParams],
   ) -> jt.Float[jt.Array, ""]:
     """Compute the log-likelihood of the observed data.
 
