@@ -57,6 +57,13 @@ jobs:
       - name: Run type checks
         run: uv run ty check examples
 
+      - name: Cache example datasets
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/grax
+          key: datasets-${{ hashFiles('examples/*.py') }}
+          restore-keys: datasets-
+
       - name: Run examples
         env:
           MPLBACKEND: Agg

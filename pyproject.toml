@@ -24,6 +24,7 @@ dev = [
 ]
 examples = [
   "matplotlib",
+  "polars",
 ]
 
 [build-system]
@@ -42,29 +43,27 @@ cache-dir = "~/.cache/ruff"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "PLC0105",  # Don't require suffixing typevar with their variance.
-  "CPY001",   # Don't require copyright notices.
-  "COM812",   # Don't require trailing commas.
-  "F722",     # Ignore syntax errors in forward annotations which falsely flags
-              # type strings in jaxtyping (see
-              # https://docs.kidger.site/jaxtyping/faq/).
-  "TC001",    # Don't require moving imports only used in annotations into a
-  "TC002",    # TYPE_CHECKING block. With `from __future__ import annotations`,
-  "TC003",    # runtime type checking (see grax.base.typed) evaluates them, so
-              # they must be imported at runtime.
+  "PLC0105",        # Don't require suffixing typevar with their variance.
+  "CPY001",         # Don't require copyright notices.
+  "COM812",         # Don't require trailing commas.
+  "F722",           # Ignore syntax errors in forward annotations which falsely
+                    # flags type strings in jaxtyping (see
+                    # https://docs.kidger.site/jaxtyping/faq/).
+  "TC001", "TC002", # Don't require TYPE_CHECKING blocks.
+  "TC003",          # ...
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = [
-  "S101",          # Allow assertions.
-  "PLR2004",       # Allow comparing against magic values.
-  "SLF001",        # Allow private access in tests.
-  "INP001",        # Treat tests/ as a flat directory, not a package.
-  "D100", "D101",  # Don't require docstrings on tests.
-  "D102", "D103",  # ...
+  "S101",           # Allow assertions.
+  "PLR2004",        # Allow comparing against magic values.
+  "SLF001",         # Allow private access in tests.
+  "INP001",         # Treat tests/ as a flat directory, not a package.
+  "D100", "D101",   # Don't require docstrings on tests.
+  "D102", "D103",   # ...
 ]
 "examples/**" = [
-  "INP001",        # Treat examples/ as a flat directory, not a package.
+  "INP001",         # Treat examples/ as a flat directory, not a package.
 ]
 
 [tool.ruff.lint.isort]
@@ -78,6 +77,5 @@ convention = "google"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-# Measure the library only, not the tests.
 source = ["grax"]
 branch = true
