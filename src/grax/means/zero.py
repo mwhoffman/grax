@@ -45,5 +45,5 @@ class ZeroMean(means_base.Mean[None]):
       An n-vector of zeros, one per input point.
     """
     del params
-    checks.check_shape(x, (None, self.dim))
+    checks.check_shape(x, (None, self.dim), name="x")
     return jnp.zeros(x.shape[0])

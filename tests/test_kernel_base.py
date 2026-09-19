@@ -194,3 +194,15 @@ def test_rmul_by_unsupported_type_raises_type_error(other: object):
   k = kernels.SEKernel(dim=3)
   with pytest.raises(TypeError):
     _ = other * k  # ty: ignore[unsupported-operator]
+
+
+def test_constant_call_error_names_the_offending_input(
+  constant: base.ConstantKernel,
+):
+  params = constant.init()
+  good = jnp.zeros((2, 3))
+  bad = jnp.zeros((2, 2))
+  with pytest.raises(checks.CheckError, match=r"^x1 has shape"):
+    constant(params, bad, good)
+  with pytest.raises(checks.CheckError, match=r"^x2 has shape"):
+    constant(params, good, bad)

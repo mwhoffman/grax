@@ -45,6 +45,12 @@ def test_construction_rejects_a_scalar_ell_when_dim_is_above_one():
     se.SEKernel(dim=3, ell=0.8)
 
 
+@pytest.mark.parametrize("ell", [[1.0, 0.0], [-1.0, 1.0]])
+def test_construction_rejects_non_positive_ell(ell: list[float]):
+  with pytest.raises(ValueError, match="ell must be positive"):
+    se.SEKernel(dim=2, ell=ell)
+
+
 def test_construction_rejects_int_ell():
   with pytest.raises(jt.TypeCheckError):
     se.SEKernel(dim=1, ell=1)
@@ -65,6 +71,20 @@ def test_call_rejects_params_with_wrong_dim(kernel: se.SEKernel):
   x = jnp.zeros((1, 3))
   with pytest.raises(checks.CheckError, match=r"expected \(3,\)"):
     kernel(bad_params, x, x)
+
+
+def test_call_error_names_the_offending_params(kernel: se.SEKernel):
+  bad_params = se.SEParams(logell=jnp.zeros(2))
+  x = jnp.zeros((1, 3))
+  with pytest.raises(checks.CheckError, match=r"^params\.logell has shape"):
+    kernel(bad_params, x, x)
+
+
+def test_construction_error_names_ell():
+  with pytest.raises(checks.CheckError, match=r"^ell has shape"):
+    se.SEKernel(dim=3, ell=[0.5, 1.0])
+  with pytest.raises(ValueError, match=r"^ell must be positive"):
+    se.SEKernel(dim=1, ell=-1.0)
 
 
 def test_diag_rejects_params_with_wrong_dim(kernel: se.SEKernel):

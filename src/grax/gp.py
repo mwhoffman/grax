@@ -234,7 +234,7 @@ class GP(Generic[KernelParams, MeanParams]):
     """
     x = jnp.asarray(x)
     y = jnp.asarray(y)
-    checks.check_shape(x, (None, *self._kernel.shape))
+    checks.check_shape(x, (None, *self._kernel.shape), name="x")
 
     if self.__data_pending is None:
       self.__data_pending = GPData(x=x, y=y)
@@ -302,7 +302,7 @@ class GP(Generic[KernelParams, MeanParams]):
       not include observation noise.
     """
     x = jnp.asarray(x)
-    checks.check_shape(x, (None, *self._kernel.shape))
+    checks.check_shape(x, (None, *self._kernel.shape), name="x")
 
     stats = self._statistics(self._params)
     data = self._data

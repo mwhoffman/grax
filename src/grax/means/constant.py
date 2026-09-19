@@ -73,5 +73,5 @@ class ConstantMean(means_base.Mean[ConstantParams]):
     Returns:
       An n-vector with `params.offset` repeated for each input point.
     """
-    checks.check_shape(x, (None, *self.input_shape))
+    checks.check_shape(x, (None, *self.input_shape), name="x")
     return jnp.full(x.shape[0], params.offset)

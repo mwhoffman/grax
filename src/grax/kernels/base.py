@@ -146,9 +146,7 @@ class ConstantKernel(Kernel[ConstantParams]):
 
   def __post_init__(self) -> None:
     """Check that, if given, rho is positive."""
-    if self.rho is not None and not jnp.asarray(self.rho) > 0:
-      msg = f"rho must be positive, got {self.rho}."
-      raise checks.CheckError(msg)
+    checks.check_none_or_positive(self.rho, name="rho")
 
   @property
   def shape(self) -> tuple[int, ...]:
@@ -185,8 +183,8 @@ class ConstantKernel(Kernel[ConstantParams]):
       An array K of shape (n, m) where n and m are the batch dimensions of
       `x1` and `x2` respectively, with every entry equal to `rho`.
     """
-    checks.check_shape(x1, (None, *self.input_shape))
-    checks.check_shape(x2, (None, *self.input_shape))
+    checks.check_shape(x1, (None, *self.input_shape), name="x1")
+    checks.check_shape(x2, (None, *self.input_shape), name="x2")
 
     rho = jnp.exp(params.logrho)
     return jnp.full((x1.shape[0], x2.shape[0]), rho)
@@ -206,7 +204,7 @@ class ConstantKernel(Kernel[ConstantParams]):
     Returns:
       An n-vector with every entry equal to `rho`.
     """
-    checks.check_shape(x, (None, *self.input_shape))
+    checks.check_shape(x, (None, *self.input_shape), name="x")
 
     rho = jnp.exp(params.logrho)
     return jnp.full(x.shape[0], rho)
