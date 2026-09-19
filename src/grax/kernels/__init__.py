@@ -2,6 +2,7 @@
 
 from grax.kernels.base import ConstantKernel
 from grax.kernels.base import ProductKernel
+from grax.kernels.base import SumKernel
 from grax.kernels.periodic import PeriodicKernel
 from grax.kernels.rational_quadratic import RQKernel
 from grax.kernels.squared_exponential import SEKernel
@@ -13,4 +14,5 @@ __all__ = [
   "ProductKernel",
   "RQKernel",
   "SEKernel",
+  "SumKernel",
 ]

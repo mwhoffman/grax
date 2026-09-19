@@ -79,26 +79,21 @@ class Kernel(abc.ABC, Generic[Params]):
   ) -> "ProductKernel[Params, ConstantParams]": ...
 
   def __mul__(self, other: object) -> "ProductKernel":
-    """Multiply this kernel by another kernel or a positive scalar.
-
-    A scalar is replaced by a `ConstantKernel` with the same input shape as this
-    kernel, which introduces a trainable parameter initialized to the scalar.
+    """Multiply this kernel by another kernel or a positive float.
 
     Args:
       other: the kernel, or positive float, to multiply by.
 
     Returns:
       The product kernel, with this kernel as `k1` and `other` as `k2`.
+
+    Raises:
+      TypeError: if `other` is neither a kernel nor a float.
     """
-    if isinstance(other, Kernel):
-      return ProductKernel(k1=self, k2=other)
-    if isinstance(other, float):
-      constant = ConstantKernel(input_shape=self.shape, rho=other)
-      return ProductKernel(k1=self, k2=constant)
-    return NotImplemented
+    return ProductKernel(k1=self, k2=as_kernel(other, self.shape))
 
   def __rmul__(self, other: float) -> "ProductKernel[ConstantParams, Params]":
-    """Multiply a positive scalar by this kernel.
+    """Multiply a positive float by this kernel.
 
     Args:
       other: the positive float to multiply by.
@@ -107,10 +102,40 @@ class Kernel(abc.ABC, Generic[Params]):
       The product kernel, with a `ConstantKernel` as `k1` and this kernel as
       `k2`.
     """
-    if isinstance(other, float):
-      constant = ConstantKernel(input_shape=self.shape, rho=other)
-      return ProductKernel(k1=constant, k2=self)
-    return NotImplemented
+    return ProductKernel(k1=as_kernel(other, self.shape), k2=self)
+
+  @overload
+  def __add__(
+    self, other: "Kernel[Params2]"
+  ) -> "SumKernel[Params, Params2]": ...
+
+  @overload
+  def __add__(self, other: float) -> "SumKernel[Params, ConstantParams]": ...
+
+  def __add__(self, other: object) -> "SumKernel":
+    """Add another kernel or a positive float to this kernel.
+
+    Args:
+      other: the kernel, or positive float, to add.
+
+    Returns:
+      The sum kernel, with this kernel as `k1` and `other` as `k2`.
+
+    Raises:
+      TypeError: if `other` is neither a kernel nor a float.
+    """
+    return SumKernel(k1=self, k2=as_kernel(other, self.shape))
+
+  def __radd__(self, other: float) -> "SumKernel[ConstantParams, Params]":
+    """Add this kernel to a positive float.
+
+    Args:
+      other: the positive float to add to.
+
+    Returns:
+      The sum kernel, with a `ConstantKernel` as `k1` and this kernel as `k2`.
+    """
+    return SumKernel(k1=as_kernel(other, self.shape), k2=self)
 
 
 @base.typed
@@ -210,6 +235,32 @@ class ConstantKernel(Kernel[ConstantParams]):
     return jnp.full(x.shape[0], rho)
 
 
+def as_kernel(x: object, shape: tuple[int, ...]) -> Kernel:
+  """Convert a kernel or a positive float to a kernel.
+
+  A float is replaced by a `ConstantKernel`, which introduces a trainable
+  parameter initialized to the float.
+
+  Args:
+    x: the kernel or positive float to convert.
+    shape: the input shape of the kernel that `x` will be combined with, used
+      for the `ConstantKernel`.
+
+  Returns:
+    `x` if it is already a kernel, and otherwise a `ConstantKernel` of the
+    given input shape.
+
+  Raises:
+    TypeError: if `x` is neither a kernel nor a float.
+  """
+  if isinstance(x, Kernel):
+    return x
+  if isinstance(x, float):
+    return ConstantKernel(input_shape=shape, rho=x)
+  msg = f"Expected a Kernel or a positive float, got {type(x).__name__}."
+  raise TypeError(msg)
+
+
 @base.typed
 @jax.tree_util.register_dataclass
 @dataclasses.dataclass(frozen=True, kw_only=True)
@@ -294,3 +345,89 @@ class ProductKernel(Kernel[ProductParams[Params1, Params2]]):
       The elementwise product of the sub-kernels' diagonals.
     """
     return self.k1.diag(params.k1, x) * self.k2.diag(params.k2, x)
+
+
+@base.typed
+@jax.tree_util.register_dataclass
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class SumParams(Generic[Params1, Params2]):
+  """Parameters of the sum kernel.
+
+  Attributes:
+    k1: the parameters of the first kernel.
+    k2: the parameters of the second kernel.
+  """
+
+  k1: Params1
+  k2: Params2
+
+
+@base.typed
+@dataclasses.dataclass(frozen=True, kw_only=True)
+class SumKernel(Kernel[SumParams[Params1, Params2]]):
+  """The sum of two kernels.
+
+  Attributes:
+    k1: the first kernel.
+    k2: the second kernel; must expect the same input shape as `k1`.
+  """
+
+  k1: Kernel[Params1]
+  k2: Kernel[Params2]
+
+  def __post_init__(self) -> None:
+    """Check that the two kernels expect the same input shape."""
+    if self.k1.shape != self.k2.shape:
+      msg = f"k1.shape {self.k1.shape} != k2.shape {self.k2.shape}."
+      raise checks.CheckError(msg)
+
+  @property
+  def shape(self) -> tuple[int, ...]:
+    """The expected shape of a single kernel input (excluding batch dims)."""
+    return self.k1.shape
+
+  @base.typed
+  def init(self) -> SumParams[Params1, Params2]:
+    """Construct parameters for the kernel from those of `k1` and `k2`.
+
+    Returns:
+      The parameters of the kernel, holding the params of each sub-kernel.
+    """
+    return SumParams(k1=self.k1.init(), k2=self.k2.init())
+
+  @base.typed
+  def __call__(
+    self,
+    params: SumParams[Params1, Params2],
+    x1: jt.Float[jt.Array, " n *d"],
+    x2: jt.Float[jt.Array, " m *d"],
+  ) -> jt.Float[jt.Array, "n m"]:
+    """Evaluate the kernel on given inputs.
+
+    Args:
+      params: the parameters of the kernel.
+      x1: the first set of kernel inputs.
+      x2: the second set of kernel inputs.
+
+    Returns:
+      An array K of shape (n, m) that is the elementwise sum of the sub-kernels
+      evaluated on `x1` and `x2`.
+    """
+    return self.k1(params.k1, x1, x2) + self.k2(params.k2, x1, x2)
+
+  @base.typed
+  def diag(
+    self,
+    params: SumParams[Params1, Params2],
+    x: jt.Float[jt.Array, " n *d"],
+  ) -> jt.Float[jt.Array, " n"]:
+    """Evaluate the diagonal kernel matrix on given inputs.
+
+    Args:
+      params: the parameters of the kernel.
+      x: the set of kernel inputs.
+
+    Returns:
+      The elementwise sum of the sub-kernels' diagonals.
+    """
+    return self.k1.diag(params.k1, x) + self.k2.diag(params.k2, x)
